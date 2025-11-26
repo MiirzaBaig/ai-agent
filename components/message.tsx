@@ -4,8 +4,8 @@ import type { Message } from "ai";
 import { AnimatePresence, motion } from "motion/react";
 import { memo } from "react";
 import equal from "fast-deep-equal";
+import { Streamdown } from "streamdown";
 
-import { Markdown } from "./markdown";
 import { ABORTED, cn } from "@/lib/utils";
 import {
   Camera,
@@ -71,7 +71,7 @@ const PurePreviewMessage = ({
                             message.role === "user",
                         })}
                       >
-                        <Markdown>{part.text}</Markdown>
+                        <Streamdown>{part.text}</Streamdown>
                       </div>
                     </motion.div>
                   );
