@@ -12,6 +12,7 @@ type EventStoreContextType = {
   clearEvents: () => void;
   loadEvents: (sessionId: string) => void;
   saveEvents: (sessionId: string) => void;
+  getEventsSortedByTime: () => AgentEvent[];
 };
 
 const EventStoreContext = createContext<EventStoreContextType | undefined>(undefined);
@@ -99,6 +100,10 @@ export function EventStoreProvider({ children }: { children: React.ReactNode }) 
     [events]
   );
 
+  const getEventsSortedByTime = useCallback((): AgentEvent[] => {
+    return [...events].sort((a, b) => a.timestamp - b.timestamp);
+  }, [events]);
+
   // Auto-save when events change and we have a session
   useEffect(() => {
     if (currentSessionId && events.length > 0) {
@@ -121,6 +126,7 @@ export function EventStoreProvider({ children }: { children: React.ReactNode }) 
         clearEvents,
         loadEvents,
         saveEvents,
+        getEventsSortedByTime,
       }}
     >
       {children}

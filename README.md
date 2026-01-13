@@ -2,22 +2,12 @@ Author: Mirza Baig
 
 # AI SDK Computer Use - Production-Quality Agent Dashboard
 
-<a href="https://ai-sdk-starter-groq.vercel.app">
+<a href="https://ai-sdk-computer-use-theta-dun.vercel.app/">
   <h1 align="center">AI SDK Computer Use Demo</h1>
 </a>
 
 <p align="center">
   A production-quality AI agent dashboard demonstrating Anthropic Claude Sonnet 4's computer use capabilities, built with Next.js, TypeScript, and the Vercel AI SDK. Features a two-panel dashboard with real-time agent observability, session management, and performance-optimized VNC viewer.
-</p>
-
-<p align="center">
-  <a href="https://youtu.be/7sF8ky9FXi4" target="_blank">
-    <img src="https://img.youtube.com/vi/7sF8ky9FXi4/maxresdefault.jpg" alt="Watch Demo Video" width="800" style="border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" />
-  </a>
-  <br />
-  <a href="https://youtu.be/7sF8ky9FXi4" target="_blank" style="text-decoration: none; color: #3b82f6; font-weight: 500; margin-top: 8px; display: inline-block;">
-    ▶️ Watch Demo Video
-  </a>
 </p>
 
 <p align="center">
@@ -75,7 +65,7 @@ graph TB
     subgraph "Client (Next.js App Router)"
         A[User Input] --> B[ChatPanel]
         B --> C[useChat Hook]
-        C --> D["API Chat Route"]
+        C --> D[/api/chat Route]
         
         D --> E[Anthropic Claude API]
         E --> F[Streaming Response]
@@ -103,7 +93,7 @@ graph TB
     subgraph "Server Actions"
         D --> V[E2B Tools]
         V --> W[Desktop Sandbox]
-        W --> X["Screenshot, Click, Type, etc."]
+        W --> X[Screenshot/Click/Type/etc]
     end
     
     style I fill:#3b82f6,color:#fff

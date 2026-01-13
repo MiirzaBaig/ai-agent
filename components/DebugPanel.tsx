@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronRight, Activity, Zap, Clock, Bug } from "lucide-react";
+import { ChevronRight, Activity, Zap, Clock, Bug, Copy, Check } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { useEventStore } from "@/lib/events/store";
+import { useSessionStore } from "@/lib/sessions/store";
+import { generateSessionSummary } from "@/lib/utils/session-summary";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function DebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const { events, getEventCounts, getAgentStatus } = useEventStore();
+  const [isCopied, setIsCopied] = useState(false);
+  const { events, getEventCounts, getAgentStatus, getEventsSortedByTime } = useEventStore();
+  const { sessions, currentSessionId } = useSessionStore();
   const eventCounts = getEventCounts();
   const agentStatus = getAgentStatus();
+  const sortedEvents = getEventsSortedByTime();
+  
+  const currentSession = sessions.find((s) => s.id === currentSessionId);
 
   // Handle escape key and keyboard shortcut (Cmd+Shift+D or Ctrl+Shift+D)
   useEffect(() => {
@@ -38,6 +48,43 @@ export function DebugPanel() {
     idle: "Idle",
     thinking: "Thinking",
     executing: "Executing",
+  };
+
+  const handleCopySummary = async () => {
+    if (events.length === 0) {
+      toast.error("No events to summarize");
+      return;
+    }
+
+    try {
+      const startTime = sortedEvents.length > 0 ? sortedEvents[0].timestamp : null;
+      const endTime = sortedEvents.length > 0 ? sortedEvents[sortedEvents.length - 1].timestamp : null;
+      const totalDuration = sortedEvents
+        .filter((e) => e.duration)
+        .reduce((sum, e) => sum + (e.duration || 0), 0);
+
+      const summary = generateSessionSummary({
+        session: currentSession || null,
+        events: sortedEvents,
+        eventCounts,
+        totalDuration,
+        startTime,
+        endTime,
+      });
+
+      await navigator.clipboard.writeText(summary);
+      setIsCopied(true);
+      toast.success("Session summary copied!", {
+        description: "Paste it anywhere to share or document your session.",
+        duration: 3000,
+      });
+
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      toast.error("Failed to copy summary", {
+        description: "Please try again.",
+      });
+    }
   };
 
   return (
@@ -109,6 +156,66 @@ export function DebugPanel() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Copy Summary Button */}
+          {events.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="space-y-2"
+            >
+              <motion.div
+                whileHover={{ y: -1 }}
+                whileTap={{ y: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                <Button
+                  onClick={handleCopySummary}
+                  disabled={isCopied}
+                  variant="outline"
+                  className="w-full bg-zinc-800/50 hover:bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white font-medium transition-all duration-200 disabled:opacity-100"
+                  size="lg"
+                >
+                  <AnimatePresence mode="wait">
+                    {isCopied ? (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        className="flex items-center gap-2"
+                      >
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.1, type: "spring", stiffness: 500, damping: 25 }}
+                        >
+                          <Check className="h-4 w-4" />
+                        </motion.div>
+                        <span>Copied!</span>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="copy"
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-center gap-2"
+                      >
+                        <Copy className="h-4 w-4" />
+                        <span>Copy Session Summary</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </motion.div>
+              <p className="text-xs text-zinc-500 text-center">
+                Generate and copy a formatted markdown summary
+              </p>
+            </motion.div>
+          )}
+
           {/* Agent Status */}
           <div className="bg-zinc-800/50 rounded-xl p-4">
             <div className="flex items-center gap-3 mb-3">
