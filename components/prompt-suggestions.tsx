@@ -1,59 +1,78 @@
-import { ArrowUpRight } from "lucide-react";
-import { Button } from "./ui/button";
+import { Sparkles } from "lucide-react";
+import { motion } from "motion/react";
+import { useState } from "react";
 
 const suggestions = [
   {
-    text: "Get the latest Vercel blog post",
-    prompt: "Go to vercel.com/blog and get the latest post",
+    text: "What's the weather in Dubai?",
+    prompt: "What's the weather in Dubai?",
   },
-  // {
-  //   text: "search google for cute dogs",
-  //   prompt: "Launch browser and search Google for labradoodle puppies. Show me images.",
-  // },
   {
-    text: "Create a new text file",
-    prompt: "Open a text editor and create a new file called notes.txt and write 'we are so back!'",
+    text: "Create a text file",
+    prompt: "Create a new text file called notes.txt with some sample content",
   },
-  // {
-  //   text: "Check system memory usage",
-  //   prompt: "Run the top command to show system resource usage",
-  // },
   {
-    text: "Get the latest rauchg tweet",
-    prompt: "Go to twitter.com/rauchg and get the latest tweet",
+    text: "Check system info",
+    prompt: "Show me the system information and current time",
   },
-  // {
-  //   text: "What do you see",
-  //   prompt:
-  //     "Capture a screenshot of the current screen and tell me what you see",
-  // },
 ];
 
 export const PromptSuggestions = ({
-  submitPrompt,
+  onSelectPrompt,
   disabled,
 }: {
-  submitPrompt: (prompt: string) => void;
+  onSelectPrompt: (prompt: string) => void;
   disabled: boolean;
 }) => {
+  const [clickedIndex, setClickedIndex] = useState<number | null>(null);
+
+  const handleClick = (prompt: string, index: number) => {
+    setClickedIndex(index);
+    onSelectPrompt(prompt);
+    // Reset after animation
+    setTimeout(() => setClickedIndex(null), 600);
+  };
+
+  if (disabled) return null;
+
   return (
-    <div className="flex flex-wrap items-center gap-3 px-4">
-      {suggestions.map((suggestion, index) => (
-        <Button
-          key={index}
-          variant="pill"
-          size="pill"
-          onClick={() => submitPrompt(suggestion.prompt)}
-          disabled={disabled}
-        >
-          <span>
-            <span className="text-black text-sm">
-              {suggestion.text.toLowerCase()}
-            </span>
-          </span>
-          <ArrowUpRight className="ml-1 h-2 w-2 sm:h-3 sm:w-3 text-zinc-500 group-hover:opacity-70" />
-        </Button>
-      ))}
+    <div className="px-4 pb-3">
+      <motion.div
+        className="flex items-center gap-2 mb-2.5"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <Sparkles className="h-3.5 w-3.5 text-zinc-400" />
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+          Try asking
+        </span>
+      </motion.div>
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((suggestion, index) => (
+          <motion.button
+            key={index}
+            onClick={() => handleClick(suggestion.prompt, index)}
+            disabled={disabled}
+            className="group px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-700 bg-zinc-50 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200 hover:border-zinc-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-zinc-50 disabled:hover:text-zinc-700"
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{
+              opacity: 1,
+              scale: clickedIndex === index ? [1, 0.95, 1] : 1,
+              y: 0,
+            }}
+            transition={{
+              opacity: { duration: 0.3, delay: index * 0.05 },
+              scale: { duration: 0.3 },
+              y: { duration: 0.3, delay: index * 0.05, ease: "easeOut" },
+            }}
+            whileHover={!disabled ? { scale: 1.05, y: -1 } : {}}
+            whileTap={!disabled ? { scale: 0.95 } : {}}
+          >
+            {suggestion.text}
+          </motion.button>
+        ))}
+      </div>
     </div>
   );
 };

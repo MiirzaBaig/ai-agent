@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/react";
+import { EventStoreProvider } from "@/lib/events/store";
+import { SessionStoreProvider } from "@/lib/sessions/store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +21,13 @@ export const metadata: Metadata = {
   description: "A Next.js app that uses the AI SDK and Anthropic to create a computer using agent.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +38,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <SessionStoreProvider>
+          <EventStoreProvider>
+            {children}
+          </EventStoreProvider>
+        </SessionStoreProvider>
         <Toaster />
         <Analytics />
       </body>

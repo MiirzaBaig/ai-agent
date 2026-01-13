@@ -1,5 +1,6 @@
-import { ArrowUp } from "lucide-react";
-import { Input as ShadcnInput } from "./ui/input";
+import { ArrowUp, Square } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 interface InputProps {
   input: string;
@@ -18,50 +19,134 @@ export const Input = ({
   status,
   stop,
 }: InputProps) => {
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const prevInputRef = useRef(input);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Detect when input changes from external source (suggestion selection)
+  useEffect(() => {
+    if (input !== prevInputRef.current && input.trim() && !prevInputRef.current.trim()) {
+      setIsHighlighted(true);
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 100);
+      setTimeout(() => setIsHighlighted(false), 1500);
+    }
+    prevInputRef.current = input;
+  }, [input]);
+
   return (
-    <div className="relative w-full">
-      <ShadcnInput
-        className="bg-secondary py-6 w-full rounded-xl pr-12"
-        value={input}
-        autoFocus
-        placeholder={"Tell me what to do..."}
-        onChange={handleInputChange}
-        disabled={isLoading || isInitializing}
-      />
+    <motion.div
+      className="relative w-full"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
+      <motion.div
+        className="relative"
+        animate={{
+          scale: isHighlighted ? [1, 1.02, 1] : 1,
+        }}
+        transition={{
+          duration: 0.5,
+          ease: [0.4, 0, 0.2, 1],
+        }}
+      >
+        <motion.div
+          animate={{
+            boxShadow: isHighlighted
+              ? [
+                  "0 0 0 0 rgba(59, 130, 246, 0)",
+                  "0 0 0 4px rgba(59, 130, 246, 0.2)",
+                  "0 0 0 0 rgba(59, 130, 246, 0)",
+                ]
+              : "0 0 0 0 rgba(59, 130, 246, 0)",
+          }}
+          transition={{
+            duration: 0.5,
+            ease: "easeOut",
+          }}
+          className="rounded-2xl"
+        >
+          <input
+            ref={inputRef}
+            type="text"
+            className="w-full h-12 sm:h-14 px-4 pr-14 sm:pr-14 text-base sm:text-sm bg-white dark:bg-zinc-900 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg placeholder:text-zinc-400 dark:placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            value={input ?? ""}
+            placeholder="Tell me what to do..."
+            onChange={handleInputChange}
+            disabled={isLoading || isInitializing}
+          />
+        </motion.div>
+      </motion.div>
       {status === "streaming" || status === "submitted" ? (
-        <button
+        <motion.button
           type="button"
           onClick={stop}
-          className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 bg-black hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors"
+          className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 rounded-full h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-red-600 hover:bg-red-700 active:bg-red-800 touch-manipulation shadow-lg transition-all duration-200"
+          title="Stop generation"
+          aria-label="Stop generation"
+          animate={{
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            scale: {
+              duration: 1.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatDelay: 0.5,
+            },
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
-          <div className="animate-spin h-4 w-4">
-            <svg className="h-4 w-4 text-white" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          </div>
-        </button>
+          <Square className="h-4 w-4 text-white fill-white" />
+        </motion.button>
       ) : (
-        <button
+        <motion.button
           type="submit"
-          disabled={isLoading || !input.trim() || isInitializing}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 bg-black hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors"
+          disabled={isLoading || !input?.trim() || isInitializing}
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-black hover:bg-zinc-800 active:bg-zinc-900 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-all duration-200 touch-manipulation shadow-lg"
+          animate={{
+            scale: input?.trim() ? 1 : 0.96,
+            boxShadow: input?.trim() 
+              ? [
+                  "0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                  "0 8px 12px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)",
+                  "0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                ]
+              : "0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+          }}
+          transition={{
+            duration: 0.25,
+            ease: [0.4, 0, 0.2, 1],
+            boxShadow: {
+              duration: 1.2,
+              ease: "easeInOut",
+              repeat: input?.trim() ? Infinity : 0,
+              repeatDelay: 0.8,
+            },
+          }}
+          whileHover={input?.trim() ? { scale: 1.03 } : {}}
+          whileTap={input?.trim() ? { scale: 0.97 } : {}}
         >
-          <ArrowUp className="h-4 w-4 text-white" />
-        </button>
+          <motion.div
+            animate={{
+              y: input?.trim() ? [0, -3, 0] : 0,
+              rotate: input?.trim() ? [0, 8, -8, 0] : 0,
+            }}
+            transition={{
+              duration: 1.8,
+              ease: [0.4, 0, 0.6, 1],
+              repeat: input?.trim() ? Infinity : 0,
+              repeatDelay: 0.8,
+            }}
+          >
+            <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          </motion.div>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 };

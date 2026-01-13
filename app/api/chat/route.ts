@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     await req.json();
   try {
     const result = streamText({
-      model: anthropic("claude-3-7-sonnet-20250219"), // Using Sonnet for computer use
+      model: anthropic("claude-sonnet-4-20250514"), // Using Sonnet 4 for computer use
       system:
         "You are a helpful assistant with access to a computer. " +
         "Use the computer tool to help the user with their requests. " +
@@ -28,10 +28,18 @@ export async function POST(req: Request) {
 
     // Create response stream
     const response = result.toDataStreamResponse({
-      // @ts-expect-error eheljfe
       getErrorMessage(error) {
         console.error(error);
-        return error;
+        
+        // Handle rate limit errors with a user-friendly message
+        if (error instanceof Error) {
+          const errorMessage = error.message;
+          if (errorMessage.includes("rate limit") || errorMessage.includes("exceed")) {
+            return "Rate limit exceeded. Please wait a moment and try again. Your tier allows 30,000 input tokens per minute.";
+          }
+          return errorMessage;
+        }
+        return String(error);
       },
     });
 

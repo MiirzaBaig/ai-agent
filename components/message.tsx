@@ -25,11 +25,13 @@ const PurePreviewMessage = ({
   message,
   isLatestMessage,
   status,
+  onToolCallClick,
 }: {
   message: Message;
   isLoading: boolean;
   status: "error" | "submitted" | "streaming" | "ready";
   isLatestMessage: boolean;
+  onToolCallClick?: (toolCallId: string) => void;
 }) => {
   return (
     <AnimatePresence key={message.id}>
@@ -156,59 +158,106 @@ const PurePreviewMessage = ({
 
                     return (
                       <motion.div
-                        initial={{ y: 5, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
+                        initial={{ y: 8, opacity: 0, scale: 0.98 }}
+                        animate={{ y: 0, opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                         key={`message-${message.id}-part-${i}`}
-                        className="flex flex-col gap-2 p-2 mb-3 text-sm bg-zinc-50 dark:bg-zinc-900 rounded-md border border-zinc-200 dark:border-zinc-800"
+                        className={cn(
+                          "flex flex-col gap-3 mb-4 text-sm",
+                          "bg-gradient-to-br from-zinc-50 to-zinc-100/50 dark:from-zinc-900 dark:to-zinc-950/50",
+                          "rounded-xl border border-zinc-200/80 dark:border-zinc-800/80",
+                          "cursor-pointer transition-all duration-200",
+                          "hover:bg-zinc-100 dark:hover:bg-zinc-800/80",
+                          "hover:border-zinc-300 dark:hover:border-zinc-700",
+                          "active:bg-zinc-200 dark:active:bg-zinc-700/50",
+                          "active:scale-[0.98]",
+                          "shadow-sm hover:shadow-md",
+                          "min-h-[72px] sm:min-h-[64px]",
+                          "p-4 sm:p-3.5",
+                          "touch-manipulation"
+                        )}
+                        onClick={() => onToolCallClick?.(toolCallId)}
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="flex items-center justify-center w-8 h-8 bg-zinc-50 dark:bg-zinc-800 rounded-full">
-                            {ActionIcon && <ActionIcon className="w-4 h-4" />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium font-mono flex items-baseline gap-2">
-                              {actionLabel}
+                        <div className="flex-1 flex items-center gap-3 sm:gap-2.5">
+                          <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.1, duration: 0.2 }}
+                            className={cn(
+                              "flex items-center justify-center",
+                              "w-12 h-12 sm:w-10 sm:h-10",
+                              "bg-white dark:bg-zinc-800/80",
+                              "rounded-xl shadow-sm",
+                              "border border-zinc-200/50 dark:border-zinc-700/50",
+                              "flex-shrink-0"
+                            )}
+                          >
+                            {ActionIcon && (
+                              <ActionIcon className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-700 dark:text-zinc-300" />
+                            )}
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-zinc-900 dark:text-zinc-100 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5">
+                              <span className="text-sm sm:text-base">{actionLabel}</span>
                               {actionDetail && (
-                                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-normal">
+                                <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-normal">
                                   {actionDetail}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className="w-5 h-5 flex items-center justify-center">
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+                            className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center flex-shrink-0"
+                          >
                             {state === "call" ? (
                               isLatestMessage && status !== "ready" ? (
-                                <Loader2 className="animate-spin h-4 w-4 text-zinc-500" />
+                                <Loader2 className="animate-spin h-5 w-5 sm:h-4 sm:w-4 text-blue-500" />
                               ) : (
-                                <StopCircle className="h-4 w-4 text-red-500" />
+                                <StopCircle className="h-5 w-5 sm:h-4 sm:w-4 text-red-500" />
                               )
                             ) : state === "result" ? (
                               part.toolInvocation.result === ABORTED ? (
                                 <CircleSlash
-                                size={14}
-                                className="text-amber-600"
-                                />                              ) : (
+                                  size={18}
+                                  className="text-amber-500 sm:w-4 sm:h-4"
+                                />
+                              ) : (
                                 <CheckCircle
-                                  size={14}
-                                  className="text-green-600"
+                                  size={18}
+                                  className="text-green-500 sm:w-4 sm:h-4"
                                 />
                               )
                             ) : null}
-                          </div>
+                          </motion.div>
                         </div>
                         {state === "result" ? (
                           part.toolInvocation.result.type === "image" && (
-                            <div className="p-2">
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.2, duration: 0.3 }}
+                              className="mt-2 p-2 bg-white dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+                            >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={`data:image/png;base64,${part.toolInvocation.result.data}`}
                                 alt="Generated Image"
-                                className="w-full aspect-[1024/768] rounded-sm"
+                                className="w-full aspect-[1024/768] rounded-md object-cover shadow-sm"
                               />
-                            </div>
+                            </motion.div>
                           )
                         ) : action === "screenshot" ? (
-                          <div className="w-full aspect-[1024/768] rounded-sm bg-zinc-200 dark:bg-zinc-800 animate-pulse"></div>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="w-full aspect-[1024/768] rounded-lg bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 animate-pulse border border-zinc-300 dark:border-zinc-700"
+                          />
                         ) : null}
                       </motion.div>
                     );
@@ -218,33 +267,67 @@ const PurePreviewMessage = ({
 
                     return (
                       <motion.div
-                        initial={{ y: 5, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
+                        initial={{ y: 8, opacity: 0, scale: 0.98 }}
+                        animate={{ y: 0, opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                         key={`message-${message.id}-part-${i}`}
-                        className="flex items-center gap-2 p-2 mb-3 text-sm bg-zinc-50 dark:bg-zinc-900 rounded-md border border-zinc-200 dark:border-zinc-800"
+                        className={cn(
+                          "flex items-center gap-3 sm:gap-2.5 mb-4 text-sm",
+                          "bg-gradient-to-br from-zinc-50 to-zinc-100/50 dark:from-zinc-900 dark:to-zinc-950/50",
+                          "rounded-xl border border-zinc-200/80 dark:border-zinc-800/80",
+                          "cursor-pointer transition-all duration-200",
+                          "hover:bg-zinc-100 dark:hover:bg-zinc-800/80",
+                          "hover:border-zinc-300 dark:hover:border-zinc-700",
+                          "active:bg-zinc-200 dark:active:bg-zinc-700/50",
+                          "active:scale-[0.98]",
+                          "shadow-sm hover:shadow-md",
+                          "min-h-[72px] sm:min-h-[64px]",
+                          "p-4 sm:p-3.5",
+                          "touch-manipulation"
+                        )}
+                        onClick={() => onToolCallClick?.(toolCallId)}
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <div className="flex items-center justify-center w-8 h-8 bg-zinc-50 dark:bg-zinc-800 rounded-full">
-                          <ScrollText className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium flex items-baseline gap-2">
-                            Running command
-                            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-normal">
-                              {command.slice(0, 40)}...
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.1, duration: 0.2 }}
+                          className={cn(
+                            "flex items-center justify-center",
+                            "w-12 h-12 sm:w-10 sm:h-10",
+                            "bg-white dark:bg-zinc-800/80",
+                            "rounded-xl shadow-sm",
+                            "border border-zinc-200/50 dark:border-zinc-700/50",
+                            "flex-shrink-0"
+                          )}
+                        >
+                          <ScrollText className="w-5 h-5 sm:w-4 sm:h-4 text-zinc-700 dark:text-zinc-300" />
+                        </motion.div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5">
+                            <span className="text-sm sm:text-base">Running command</span>
+                            <span className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-normal font-mono truncate">
+                              {command.length > 40 ? `${command.slice(0, 40)}...` : command}
                             </span>
                           </div>
                         </div>
-                        <div className="w-5 h-5 flex items-center justify-center">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+                          className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center flex-shrink-0"
+                        >
                           {state === "call" ? (
                             isLatestMessage && status !== "ready" ? (
-                              <Loader2 className="animate-spin h-4 w-4 text-zinc-500" />
+                              <Loader2 className="animate-spin h-5 w-5 sm:h-4 sm:w-4 text-blue-500" />
                             ) : (
-                              <StopCircle className="h-4 w-4 text-red-500" />
+                              <StopCircle className="h-5 w-5 sm:h-4 sm:w-4 text-red-500" />
                             )
                           ) : state === "result" ? (
-                            <CheckCircle size={14} className="text-green-600" />
+                            <CheckCircle size={18} className="text-green-500 sm:w-4 sm:h-4" />
                           ) : null}
-                        </div>
+                        </motion.div>
                       </motion.div>
                     );
                   }
@@ -276,6 +359,7 @@ export const PreviewMessage = memo(
       return false;
     // if (prevProps.message.content !== nextProps.message.content) return false;
     if (!equal(prevProps.message.parts, nextProps.message.parts)) return false;
+    if (prevProps.onToolCallClick !== nextProps.onToolCallClick) return false;
 
     return true;
   },
