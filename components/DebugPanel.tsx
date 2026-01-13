@@ -80,7 +80,7 @@ export function DebugPanel() {
       });
 
       setTimeout(() => setIsCopied(false), 2000);
-    } catch (error) {
+    } catch {
       toast.error("Failed to copy summary", {
         description: "Please try again.",
       });
