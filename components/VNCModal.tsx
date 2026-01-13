@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { ToolCallDetails } from "@/components/ToolCallDetails";
 import { useEventStore } from "@/lib/events/store";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "@/lib/utils";
 
 interface VNCModalProps {
   isOpen: boolean;
@@ -17,7 +16,6 @@ interface VNCModalProps {
   onRefreshDesktop: () => void;
   selectedToolCallId: string | null;
   isStreaming?: boolean;
-  onStop?: () => void;
 }
 
 export function VNCModal({
@@ -28,7 +26,6 @@ export function VNCModal({
   onRefreshDesktop,
   selectedToolCallId,
   isStreaming = false,
-  onStop,
 }: VNCModalProps) {
   const { events } = useEventStore();
   const selectedEvent = selectedToolCallId

@@ -306,7 +306,6 @@ export default function Chat() {
               onRefreshDesktop={refreshDesktop}
               selectedToolCallId={selectedToolCallId}
               isStreaming={status === "streaming" || status === "submitted"}
-              onStop={stop}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -364,7 +363,6 @@ export default function Chat() {
         onRefreshDesktop={refreshDesktop}
         selectedToolCallId={selectedToolCallId}
         isStreaming={status === "streaming" || status === "submitted"}
-        onStop={stop}
       />
       </div>
     </ScrollProvider>

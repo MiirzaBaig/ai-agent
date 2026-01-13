@@ -15,7 +15,6 @@ interface VNCPanelProps {
   selectedToolCallId: string | null;
   onClearSelection?: () => void;
   isStreaming?: boolean;
-  onStop?: () => void;
 }
 
 export function VNCPanel({
@@ -25,7 +24,6 @@ export function VNCPanel({
   selectedToolCallId,
   onClearSelection,
   isStreaming = false,
-  onStop,
 }: VNCPanelProps) {
   const { events } = useEventStore();
   const selectedEvent = selectedToolCallId

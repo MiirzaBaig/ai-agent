@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Clock, CheckCircle, XCircle, Loader2, Camera } from "lucide-react";
+import Image from "next/image";
 import type { AgentEvent } from "@/lib/events/types";
 import { cn } from "@/lib/utils";
 
@@ -93,10 +94,13 @@ export function ToolCallDetails({ event }: ToolCallDetailsProps) {
             Screenshot
           </div>
           <div className="rounded-lg overflow-hidden border border-zinc-700/50 bg-zinc-900/50 p-2">
-            <img
+            <Image
               src={`data:image/png;base64,${event.payload.imageData}`}
               alt="Screenshot"
+              width={800}
+              height={600}
               className="w-full h-auto rounded-md shadow-lg object-cover"
+              unoptimized
             />
           </div>
         </motion.div>

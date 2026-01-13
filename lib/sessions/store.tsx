@@ -106,7 +106,7 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
             navigator.sendBeacon(
               `/api/kill-desktop?sandboxId=${encodeURIComponent(sessionToDelete.sandboxId)}`
             );
-          } catch (error) {
+          } catch {
             // Fallback to fetch if sendBeacon fails
             fetch("/api/kill-desktop", {
               method: "POST",
