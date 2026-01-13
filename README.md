@@ -75,7 +75,7 @@ graph TB
     subgraph "Client (Next.js App Router)"
         A[User Input] --> B[ChatPanel]
         B --> C[useChat Hook]
-        C --> D[/api/chat Route]
+        C --> D["API Chat Route"]
         
         D --> E[Anthropic Claude API]
         E --> F[Streaming Response]
@@ -103,7 +103,7 @@ graph TB
     subgraph "Server Actions"
         D --> V[E2B Tools]
         V --> W[Desktop Sandbox]
-        W --> X[Screenshot/Click/Type/etc]
+        W --> X["Screenshot, Click, Type, etc."]
     end
     
     style I fill:#3b82f6,color:#fff
