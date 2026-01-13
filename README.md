@@ -2,12 +2,18 @@ Author: Mirza Baig
 
 # AI SDK Computer Use - Production-Quality Agent Dashboard
 
-<a href="https://ai-sdk-computer-use-theta-dun.vercel.app/">
+<a href="https://ai-sdk-starter-groq.vercel.app">
   <h1 align="center">AI SDK Computer Use Demo</h1>
 </a>
 
 <p align="center">
   A production-quality AI agent dashboard demonstrating Anthropic Claude Sonnet 4's computer use capabilities, built with Next.js, TypeScript, and the Vercel AI SDK. Features a two-panel dashboard with real-time agent observability, session management, and performance-optimized VNC viewer.
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/2KckmZQtNWY">
+    <strong>📹 Watch Demo Video</strong>
+  </a>
 </p>
 
 <p align="center">
@@ -24,6 +30,12 @@ Author: Mirza Baig
 ## Overview
 
 This project extends the original [vercel-labs/ai-sdk-computer-use](https://github.com/vercel-labs/ai-sdk-computer-use) demo into a production-quality AI agent dashboard. The dashboard provides real-time observability into AI agent actions, session management, and a performance-optimized interface for monitoring computer-use agents.
+
+### 🎥 Demo Video
+
+Watch the full demo video showcasing the dashboard features, live agent interactions, and technical implementation:
+
+**[📹 Watch Demo on YouTube](https://youtu.be/2KckmZQtNWY)**
 
 ### What We Built
 
