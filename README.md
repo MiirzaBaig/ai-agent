@@ -11,6 +11,16 @@ Author: Mirza Baig
 </p>
 
 <p align="center">
+  <a href="https://youtu.be/7sF8ky9FXi4" target="_blank">
+    <img src="https://img.youtube.com/vi/7sF8ky9FXi4/maxresdefault.jpg" alt="Watch Demo Video" width="800" style="border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" />
+  </a>
+  <br />
+  <a href="https://youtu.be/7sF8ky9FXi4" target="_blank" style="text-decoration: none; color: #3b82f6; font-weight: 500; margin-top: 8px; display: inline-block;">
+    ▶️ Watch Demo Video
+  </a>
+</p>
+
+<p align="center">
   <a href="#overview"><strong>Overview</strong></a> ·
   <a href="#architecture"><strong>Architecture</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
