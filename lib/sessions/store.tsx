@@ -65,7 +65,7 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
   }, [sessions]);
 
   const createSession = useCallback((): string => {
-    // Find the highest session number from existing sessions
+    // thisFind the highest session number from existing sessions
     const maxSessionNumber = sessions.reduce((max, session) => {
       const match = session.name.match(/Session (\d+)/);
       if (match) {
@@ -175,10 +175,29 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  // Load sessions on mount
+  // Clear all stored data on initia mount even (fresh start on page reload/server restart)
   useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+    // Clears all session related data from localStorage for a fresh start..
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith("ai-sessions") || key.startsWith("ai-messages-") || key.startsWith("ai-events-"))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    // Create a fresh default session
+    const defaultSession: Session = {
+      id: `session-${Date.now()}`,
+      name: "Session 1",
+      createdAt: Date.now(),
+      sandboxId: null,
+    };
+    setSessions([defaultSession]);
+    setCurrentSessionId(defaultSession.id);
+    localStorage.setItem("ai-sessions", JSON.stringify([defaultSession]));
+  }, []); // Empty dependenc only run once on mount..
 
   // Auto-save sessions when they change
   useEffect(() => {

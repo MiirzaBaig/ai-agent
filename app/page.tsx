@@ -74,6 +74,10 @@ export default function Chat() {
   useEffect(() => {
     if (!currentSessionId) return;
 
+    // thisClear's existing data first before the  loading new session data
+    clearEvents();
+    setMessages([]);
+
     // Load messages and events for this session
     const sessionMessages = loadMessages(currentSessionId);
     loadEvents(currentSessionId);
@@ -81,11 +85,9 @@ export default function Chat() {
     // Set messages in chat
     if (sessionMessages.length > 0) {
       setMessages(sessionMessages);
-    } else {
-      setMessages([]);
     }
-    clearEvents();
-  }, [currentSessionId, loadMessages, loadEvents, clearEvents, setMessages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSessionId]); // Only re-run when session changes
 
   // Extract events from messages
   useExtractEvents(messages, currentSessionId || "");
