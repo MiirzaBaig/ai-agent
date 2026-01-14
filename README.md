@@ -11,7 +11,7 @@ Author: Mirza Baig
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/2KckmZQtNWY">
+  <a href="https://youtu.be/wE9YrEtfIHI">
     <strong>📹 Watch Demo Video</strong>
   </a>
 </p>
@@ -35,7 +35,7 @@ This project extends the original [vercel-labs/ai-sdk-computer-use](https://gith
 
 Watch the full demo video showcasing the dashboard features, live agent interactions, and technical implementation:
 
-**[📹 Watch Demo on YouTube](https://youtu.be/2KckmZQtNWY)**
+**[📹 Watch Demo on YouTube](https://youtu.be/wE9YrEtfIHI)**
 
 ### What We Built
 
