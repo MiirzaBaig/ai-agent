@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "motion/react";
 
 export const BotIcon = () => {
   return (
@@ -19,9 +22,34 @@ export const BotIcon = () => {
   );
 };
 
-export const SentryMark = ({ size = 22 }: { size?: number }) => {
+export const SentryMark = ({
+  size = 22,
+  animate = false,
+}: {
+  size?: number;
+  /** When true, the chevron draws in on mount and the cursor blinks. */
+  animate?: boolean;
+}) => {
   // Terminal prompt: an agent driving a computer via commands.
   // Bold `>` chevron + a cursor bar. Friendly + techy, reads tiny as a favicon.
+  if (!animate) {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#111111"
+        strokeWidth="3"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <path d="M4 5 12 12 4 19" />
+        <path d="M14 18h6" />
+      </svg>
+    );
+  }
   return (
     <svg
       width={size}
@@ -34,10 +62,28 @@ export const SentryMark = ({ size = 22 }: { size?: number }) => {
       strokeLinecap="round"
       aria-hidden="true"
     >
-      {/* Command chevron — fills the box */}
-      <path d="M4 5 12 12 4 19" />
-      {/* Cursor / prompt bar */}
-      <path d="M14 18h6" />
+      {/* Command chevron — draws in on mount (page load / refresh) */}
+      <motion.path
+        d="M4 5 12 12 4 19"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      />
+      {/* Cursor / prompt bar — appears then blinks like a terminal caret */}
+      <motion.path
+        d="M14 18h6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 1, 0, 0, 1] }}
+        transition={{
+          opacity: {
+            duration: 1.6,
+            times: [0, 0.35, 0.55, 0.6, 0.85, 1],
+            repeat: Infinity,
+            repeatDelay: 0.2,
+            delay: 0.45,
+          },
+        }}
+      />
     </svg>
   );
 };
@@ -47,7 +93,7 @@ export const SentryLogo = () => {
     <div className="flex items-center shrink-0">
       <Link className="flex flex-row items-center gap-2 group" href="/">
         <span className="nb-border flex h-6 w-6 items-center justify-center rounded-md bg-[var(--nb-lime)] transition-transform duration-150 group-hover:-rotate-6">
-          <SentryMark size={17} />
+          <SentryMark size={17} animate />
         </span>
         <span className="text-base font-black uppercase tracking-tight text-[var(--nb-ink)]">
           Sentry

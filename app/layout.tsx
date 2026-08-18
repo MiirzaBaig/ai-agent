@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/react";
 import { EventStoreProvider } from "@/lib/events/store";
 import { SessionStoreProvider } from "@/lib/sessions/store";
+import { FaviconAnimator } from "@/components/FaviconAnimator";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
           </EventStoreProvider>
         </SessionStoreProvider>
         <Toaster />
+        <FaviconAnimator />
         <Analytics />
       </body>
     </html>

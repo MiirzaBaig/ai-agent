@@ -12,7 +12,7 @@ export const ProjectInfo = () => {
     >
       {/* Terminal-prompt mark */}
       <span className="nb-border nb-shadow flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--nb-lime)] mb-4">
-        <SentryMark size={30} />
+        <SentryMark size={30} animate />
       </span>
 
       <h3 className="text-2xl font-black uppercase tracking-tight text-[var(--nb-ink)]">
