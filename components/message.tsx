@@ -22,6 +22,65 @@ import {
   StopCircle,
 } from "lucide-react";
 
+const messageVariants = {
+  hidden: { y: 6, opacity: 0, filter: "blur(3px)" },
+  visible: {
+    y: 0,
+    opacity: 1,
+    filter: "blur(0px)",
+    transition: { duration: 0.24, ease: "easeOut" },
+  },
+};
+
+const partVariants = {
+  hidden: { y: 6, opacity: 0, filter: "blur(3px)" },
+  visible: (i: number) => ({
+    y: 0,
+    opacity: 1,
+    filter: "blur(0px)",
+    transition: {
+      delay: Math.min(i * 0.025, 0.08),
+      duration: 0.22,
+      ease: "easeOut",
+    },
+  }),
+};
+
+const toolCardVariants = {
+  hidden: { y: 8, opacity: 0, scale: 0.985, filter: "blur(4px)" },
+  visible: (i: number) => ({
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: {
+      delay: Math.min(i * 0.025, 0.08),
+      duration: 0.24,
+      ease: "easeOut",
+      scale: { duration: 0.24, ease: "easeOut" },
+    },
+  }),
+};
+
+const iconBubbleVariants = {
+  hidden: { scale: 0.92, opacity: 0, filter: "blur(3px)" },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    filter: "blur(0px)",
+    transition: { delay: 0.06, duration: 0.18, ease: "easeOut" },
+  },
+};
+
+const statusVariants = {
+  hidden: { scale: 0.9, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: { delay: 0.08, duration: 0.18, ease: "easeOut" },
+  },
+};
+
 const PurePreviewMessage = ({
   message,
   isLatestMessage,
@@ -37,9 +96,11 @@ const PurePreviewMessage = ({
   return (
     <AnimatePresence key={message.id}>
       <motion.div
+        layout="position"
         className="w-full mx-auto px-4 group/message"
-        initial={{ y: 5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        variants={messageVariants}
+        initial="hidden"
+        animate="visible"
         key={`message-${message.id}`}
         data-role={message.role}
       >
@@ -54,12 +115,12 @@ const PurePreviewMessage = ({
               className="nb-border flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--nb-lime)] mt-0.5"
               animate={
                 isLatestMessage && status !== "ready"
-                  ? { scale: [1, 1.12, 1], opacity: [1, 0.7, 1] }
+                  ? { scale: [1, 1.04, 1], opacity: [1, 0.86, 1] }
                   : { scale: 1, opacity: 1 }
               }
               transition={
                 isLatestMessage && status !== "ready"
-                  ? { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                  ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
                   : { duration: 0.2 }
               }
             >
@@ -73,8 +134,11 @@ const PurePreviewMessage = ({
                 case "text":
                   return (
                     <motion.div
-                      initial={{ y: 5, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
+                      layout="position"
+                      custom={i}
+                      variants={partVariants}
+                      initial="hidden"
+                      animate="visible"
                       key={`message-${message.id}-part-${i}`}
                       className="flex flex-row gap-2 items-start w-full pb-4"
                     >
@@ -192,9 +256,11 @@ const PurePreviewMessage = ({
 
                     return (
                       <motion.div
-                        initial={{ y: 8, opacity: 0, scale: 0.98 }}
-                        animate={{ y: 0, opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        layout="position"
+                        custom={i}
+                        variants={toolCardVariants}
+                        initial="hidden"
+                        animate="visible"
                         key={`message-${message.id}-part-${i}`}
                         className={cn(
                           "flex flex-col gap-3 mb-4 text-sm",
@@ -216,9 +282,9 @@ const PurePreviewMessage = ({
                       >
                         <div className="flex-1 flex items-center gap-3 sm:gap-2.5">
                           <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.1, duration: 0.2 }}
+                            variants={iconBubbleVariants}
+                            initial="hidden"
+                            animate="visible"
                             className={cn(
                               "flex items-center justify-center",
                               "w-12 h-12 sm:w-10 sm:h-10",
@@ -243,9 +309,9 @@ const PurePreviewMessage = ({
                             </div>
                           </div>
                           <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+                            variants={statusVariants}
+                            initial="hidden"
+                            animate="visible"
                             className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center flex-shrink-0"
                           >
                             {state === "call" ? (
@@ -272,9 +338,9 @@ const PurePreviewMessage = ({
                         {state === "result" ? (
                           (output as { type?: string })?.type === "image" && (
                             <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.2, duration: 0.3 }}
+                              initial={{ opacity: 0, y: 8, scale: 0.995, filter: "blur(4px)" }}
+                              animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                              transition={{ delay: 0.08, duration: 0.26, ease: "easeOut" }}
                               className="mt-2 p-2 bg-white dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -287,9 +353,9 @@ const PurePreviewMessage = ({
                           )
                         ) : action === "screenshot" ? (
                           <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
+                            initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                            transition={{ delay: 0.08, duration: 0.26, ease: "easeOut" }}
                             className="w-full aspect-[1024/768] rounded-lg bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 animate-pulse border border-zinc-300 dark:border-zinc-700"
                           />
                         ) : null}
@@ -301,9 +367,11 @@ const PurePreviewMessage = ({
 
                     return (
                       <motion.div
-                        initial={{ y: 8, opacity: 0, scale: 0.98 }}
-                        animate={{ y: 0, opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        layout="position"
+                        custom={i}
+                        variants={toolCardVariants}
+                        initial="hidden"
+                        animate="visible"
                         key={`message-${message.id}-part-${i}`}
                         className={cn(
                           "flex items-center gap-3 sm:gap-2.5 mb-4 text-sm",
@@ -324,9 +392,9 @@ const PurePreviewMessage = ({
                         whileTap={{ scale: 0.98 }}
                       >
                         <motion.div
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: 0.1, duration: 0.2 }}
+                          variants={iconBubbleVariants}
+                          initial="hidden"
+                          animate="visible"
                           className={cn(
                             "flex items-center justify-center",
                             "w-12 h-12 sm:w-10 sm:h-10",
@@ -347,9 +415,9 @@ const PurePreviewMessage = ({
                           </div>
                         </div>
                         <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+                          variants={statusVariants}
+                          initial="hidden"
+                          animate="visible"
                           className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center flex-shrink-0"
                         >
                           {state === "call" ? (
