@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback } from "react";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 import { PreviewMessage } from "@/components/message";
 import { Input } from "@/components/input";
 import { PromptSuggestions } from "@/components/prompt-suggestions";
@@ -11,7 +11,7 @@ import { useScrollToBottom } from "@/lib/use-scroll-to-bottom";
 import { useScrollState } from "@/lib/scroll-state";
 
 interface ChatPanelProps {
-  messages: Message[];
+  messages: UIMessage[];
   input: string;
   handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;

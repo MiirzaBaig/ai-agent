@@ -50,7 +50,7 @@ export function useUsage(sessionId: string | null) {
   const recordRun = useCallback(
     (
       modelId: ModelId,
-      tokens: { promptTokens?: number; completionTokens?: number },
+      tokens: { inputTokens?: number; outputTokens?: number },
     ) => {
       if (!sessionId) return;
       setUsage((prev) => {
@@ -58,8 +58,8 @@ export function useUsage(sessionId: string | null) {
           ? prev.models
           : [...prev.models, modelId];
         const next: SessionUsage = {
-          inputTokens: prev.inputTokens + (tokens.promptTokens ?? 0),
-          outputTokens: prev.outputTokens + (tokens.completionTokens ?? 0),
+          inputTokens: prev.inputTokens + (tokens.inputTokens ?? 0),
+          outputTokens: prev.outputTokens + (tokens.outputTokens ?? 0),
           runs: prev.runs + 1,
           models,
         };

@@ -9,7 +9,7 @@ const wait = async (seconds: number) => {
 export const resolution = { x: 1024, y: 768 };
 
 export const computerTool = (sandboxId: string) =>
-  anthropic.tools.computer_20250124({
+  anthropic.tools.computer_20251124({
     displayWidthPx: resolution.x,
     displayHeightPx: resolution.y,
     displayNumber: 1,
@@ -115,21 +115,27 @@ export const computerTool = (sandboxId: string) =>
           throw new Error(`Unsupported action: ${action}`);
       }
     },
-    experimental_toToolResultContent(result) {
-      if (typeof result === "string") {
-        return [{ type: "text", text: result }];
+    toModelOutput({ output }) {
+      if (typeof output === "string") {
+        return { type: "content", value: [{ type: "text", text: output }] };
       }
-      if (result.type === "image" && result.data) {
-        return [
-          {
-            type: "image",
-            data: result.data,
-            mimeType: "image/png",
-          },
-        ];
+      if (output.type === "image" && output.data) {
+        return {
+          type: "content",
+          value: [
+            {
+              type: "image-data",
+              mediaType: "image/png",
+              data: output.data,
+            },
+          ],
+        };
       }
-      if (result.type === "text" && result.text) {
-        return [{ type: "text", text: result.text }];
+      if (output.type === "text" && output.text) {
+        return {
+          type: "content",
+          value: [{ type: "text", text: output.text }],
+        };
       }
       throw new Error("Invalid result format");
     },

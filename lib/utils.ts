@@ -1,4 +1,4 @@
-import { UIMessage } from "ai";
+import { UIMessage, isToolUIPart, getToolName } from "ai";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -16,33 +16,31 @@ export const prunedMessages = (messages: UIMessage[]): UIMessage[] => {
   // Limit message history to prevent rate limit issues
   // Keep last 20 messages (approximately 10 exchanges)
   const maxMessages = 20;
-  const limitedMessages = messages.length > maxMessages 
-    ? [...messages.slice(0, 1), ...messages.slice(-maxMessages + 1)]
-    : messages;
+  const limitedMessages =
+    messages.length > maxMessages
+      ? [...messages.slice(0, 1), ...messages.slice(-maxMessages + 1)]
+      : messages;
 
   return limitedMessages.map((message) => {
-    // check if last message part is a tool invocation in a call state, then append a part with the tool result
-    message.parts = message.parts.map((part) => {
-      if (part.type === "tool-invocation") {
-        if (
-          part.toolInvocation.toolName === "computer" &&
-          part.toolInvocation.args.action === "screenshot"
-        ) {
-          return {
-            ...part,
-            toolInvocation: {
-              ...part.toolInvocation,
-              result: {
-                type: "text",
-                text: "Image redacted to save input tokens",
-              },
-            },
-          };
-        }
-        return part;
+    // Redact old screenshot outputs to save input tokens. In AI SDK v5, tool
+    // parts are typed (`tool-computer`) with `input`/`output`/`state` fields.
+    const parts = message.parts.map((part) => {
+      if (
+        isToolUIPart(part) &&
+        getToolName(part) === "computer" &&
+        part.state === "output-available" &&
+        (part.input as { action?: string } | undefined)?.action === "screenshot"
+      ) {
+        return {
+          ...part,
+          output: {
+            type: "text" as const,
+            value: "Image redacted to save input tokens",
+          },
+        };
       }
       return part;
     });
-    return message;
+    return { ...message, parts };
   });
 };

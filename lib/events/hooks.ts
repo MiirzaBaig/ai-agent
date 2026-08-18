@@ -1,9 +1,26 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Message } from "ai";
+import { type UIMessage, isToolUIPart, getToolName } from "ai";
 import { useEventStore } from "./store";
 import type { AgentEvent } from "./types";
+
+// The computer tool's screenshot output may arrive as the raw execute return
+// ({ type: "image", data }) or the v5 model-output content shape
+// ({ type: "content", value: [{ type: "media", data }] }). Handle both.
+function extractImageData(result: unknown): string | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const r = result as Record<string, unknown>;
+  if (typeof r.data === "string") return r.data;
+  if (Array.isArray(r.value)) {
+    const media = r.value.find(
+      (v): v is { data: string } =>
+        !!v && typeof v === "object" && typeof (v as { data?: unknown }).data === "string",
+    );
+    if (media) return media.data;
+  }
+  return undefined;
+}
 
 function mapToolCallToEventType(
   toolName: string,
@@ -61,10 +78,7 @@ function createEventFromToolCall(
         payload: {
           toolCallId,
           coordinate: args.coordinate as [number, number] | undefined,
-          imageData:
-            result && typeof result === "object" && "data" in result
-              ? (result.data as string)
-              : undefined,
+          imageData: extractImageData(result),
         },
       };
     }
@@ -151,7 +165,7 @@ function createEventFromToolCall(
   return null;
 }
 
-export function useExtractEvents(messages: Message[], sessionId: string) {
+export function useExtractEvents(messages: UIMessage[], sessionId: string) {
   const { addEvent, updateEvent, events } = useEventStore();
 
   useEffect(() => {
@@ -165,24 +179,26 @@ export function useExtractEvents(messages: Message[], sessionId: string) {
       result?: unknown;
     }> = [];
 
-    // Extract all tool invocations from messages
+    // Extract all tool invocations from messages. In AI SDK v5, tool parts are
+    // typed (`tool-computer`, `tool-bash`) with input/output/state fields; we
+    // map them onto the internal call/result shape the pipeline already uses.
     messages.forEach((message) => {
       if (message.parts) {
         message.parts.forEach((part) => {
-          if (part.type === "tool-invocation") {
-            // Only process "call" or "result" states, skip "partial-call"
-            if (part.toolInvocation.state === "call" || part.toolInvocation.state === "result") {
-              toolCalls.push({
-                id: part.toolInvocation.toolCallId,
-                toolName: part.toolInvocation.toolName,
-                args: part.toolInvocation.args as Record<string, unknown>,
-                state: part.toolInvocation.state,
-                result:
-                  part.toolInvocation.state === "result" && "result" in part.toolInvocation
-                    ? part.toolInvocation.result
-                    : undefined,
-              });
-            }
+          if (!isToolUIPart(part)) return;
+          // input-available → tool is being called; output-available → done.
+          if (
+            part.state === "input-available" ||
+            part.state === "output-available"
+          ) {
+            toolCalls.push({
+              id: part.toolCallId,
+              toolName: getToolName(part),
+              args: (part.input ?? {}) as Record<string, unknown>,
+              state: part.state === "output-available" ? "result" : "call",
+              result:
+                part.state === "output-available" ? part.output : undefined,
+            });
           }
         });
       }

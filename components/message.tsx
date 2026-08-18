@@ -1,6 +1,6 @@
 "use client";
 
-import type { Message } from "ai";
+import { type UIMessage, isToolUIPart, getToolName } from "ai";
 import { AnimatePresence, motion } from "motion/react";
 import { memo } from "react";
 import equal from "fast-deep-equal";
@@ -27,7 +27,7 @@ const PurePreviewMessage = ({
   status,
   onToolCallClick,
 }: {
-  message: Message;
+  message: UIMessage;
   isLoading: boolean;
   status: "error" | "submitted" | "streaming" | "ready";
   isLatestMessage: boolean;
@@ -77,9 +77,23 @@ const PurePreviewMessage = ({
                       </div>
                     </motion.div>
                   );
-                case "tool-invocation":
-                  const { toolName, toolCallId, state, args } =
-                    part.toolInvocation;
+                default:
+                  // AI SDK v5: tool parts are typed (`tool-computer`,
+                  // `tool-bash`) with input/output/state. Map onto the field
+                  // names the rest of this block already uses.
+                  if (!isToolUIPart(part)) return null;
+                  const toolName = getToolName(part);
+                  const toolCallId = part.toolCallId;
+                  const state =
+                    part.state === "output-available"
+                      ? "result"
+                      : part.state === "input-available" ||
+                          part.state === "input-streaming"
+                        ? "call"
+                        : part.state;
+                  const args = (part.input ?? {}) as Record<string, unknown>;
+                  const output =
+                    part.state === "output-available" ? part.output : undefined;
 
                   if (toolName === "computer") {
                     const {
@@ -89,7 +103,14 @@ const PurePreviewMessage = ({
                       duration,
                       scroll_amount,
                       scroll_direction,
-                    } = args;
+                    } = args as {
+                      action?: string;
+                      coordinate?: [number, number];
+                      text?: string;
+                      duration?: number;
+                      scroll_amount?: number;
+                      scroll_direction?: string;
+                    };
                     let actionLabel = "";
                     let actionDetail = "";
                     let ActionIcon = null;
@@ -151,7 +172,7 @@ const PurePreviewMessage = ({
                         ActionIcon = ScrollText;
                         break;
                       default:
-                        actionLabel = action;
+                        actionLabel = action ?? "";
                         ActionIcon = MousePointer;
                         break;
                     }
@@ -221,7 +242,7 @@ const PurePreviewMessage = ({
                                 <StopCircle className="h-5 w-5 sm:h-4 sm:w-4 text-red-500" />
                               )
                             ) : state === "result" ? (
-                              part.toolInvocation.result === ABORTED ? (
+                              output === ABORTED ? (
                                 <CircleSlash
                                   size={18}
                                   className="text-amber-500 sm:w-4 sm:h-4"
@@ -236,7 +257,7 @@ const PurePreviewMessage = ({
                           </motion.div>
                         </div>
                         {state === "result" ? (
-                          part.toolInvocation.result.type === "image" && (
+                          (output as { type?: string })?.type === "image" && (
                             <motion.div
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -245,7 +266,7 @@ const PurePreviewMessage = ({
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={`data:image/png;base64,${part.toolInvocation.result.data}`}
+                                src={`data:image/png;base64,${(output as { data?: string }).data}`}
                                 alt="Generated Image"
                                 className="w-full aspect-[1024/768] rounded-md object-cover shadow-sm"
                               />
@@ -263,7 +284,7 @@ const PurePreviewMessage = ({
                     );
                   }
                   if (toolName === "bash") {
-                    const { command } = args;
+                    const { command } = args as { command: string };
 
                     return (
                       <motion.div
@@ -339,9 +360,6 @@ const PurePreviewMessage = ({
                       <pre>{JSON.stringify(args, null, 2)}</pre>
                     </div>
                   );
-
-                default:
-                  return null;
               }
             })}
           </div>
@@ -355,9 +373,6 @@ export const PreviewMessage = memo(
   PurePreviewMessage,
   (prevProps, nextProps) => {
     if (prevProps.status !== nextProps.status) return false;
-    if (prevProps.message.annotations !== nextProps.message.annotations)
-      return false;
-    // if (prevProps.message.content !== nextProps.message.content) return false;
     if (!equal(prevProps.message.parts, nextProps.message.parts)) return false;
     if (prevProps.onToolCallClick !== nextProps.onToolCallClick) return false;
 

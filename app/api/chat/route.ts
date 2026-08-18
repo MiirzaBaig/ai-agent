@@ -1,5 +1,10 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { streamText, UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  stepCountIs,
+  UIMessage,
+} from "ai";
 import { killDesktop } from "@/lib/e2b/utils";
 import { bashTool, computerTool } from "@/lib/e2b/tool";
 import { prunedMessages } from "@/lib/utils";
@@ -18,6 +23,7 @@ export async function POST(req: Request) {
   try {
     // Resolve the client-supplied model against the allow-list before use.
     const model = resolveModelId(modelId);
+    const modelMessages = await convertToModelMessages(prunedMessages(messages));
     const result = streamText({
       model: anthropic(model),
       system:
@@ -26,18 +32,21 @@ export async function POST(req: Request) {
         "Let the user know when an action will take time to complete. " +
         "If a browser setup wizard appears, skip it and go straight to the task (e.g. type the URL into the address bar). " +
         "An approval gate blocks irreversible or system-level commands (deleting large trees, formatting disks, powering off, piping remote scripts into a shell). If a command is blocked, do not retry it — explain what you were trying to do and ask the user to confirm, or take a safer, reversible approach.",
-      messages: prunedMessages(messages),
+      messages: modelMessages,
+      // Multi-step agent loop (was useChat maxSteps: 30 in v4).
+      stopWhen: stepCountIs(30),
       tools: { computer: computerTool(sandboxId), bash: bashTool(sandboxId) },
       providerOptions: {
         anthropic: { cacheControl: { type: "ephemeral" } },
       },
     });
 
-    // Create response stream. sendUsage streams token counts to the client
-    // so the dashboard can show per-session cost + model routing telemetry.
-    const response = result.toDataStreamResponse({
-      sendUsage: true,
-      getErrorMessage(error) {
+    // Stream the response as UI messages. Total token usage is attached as
+    // message metadata on finish so the dashboard can show per-session cost.
+    const response = result.toUIMessageStreamResponse({
+      messageMetadata: ({ part }) =>
+        part.type === "finish" ? { totalUsage: part.totalUsage } : undefined,
+      onError(error) {
         console.error(error);
         
         // Handle rate limit errors with a user-friendly message

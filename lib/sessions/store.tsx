@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import type { Session } from "./types";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 type SessionStoreContextType = {
   sessions: Session[];
@@ -13,8 +13,8 @@ type SessionStoreContextType = {
   updateSessionSandboxId: (sessionId: string, sandboxId: string | null) => void;
   loadSessions: () => void;
   saveSessions: () => void;
-  loadMessages: (sessionId: string) => Message[];
-  saveMessages: (sessionId: string, messages: Message[]) => void;
+  loadMessages: (sessionId: string) => UIMessage[];
+  saveMessages: (sessionId: string, messages: UIMessage[]) => void;
 };
 
 const SessionStoreContext = createContext<SessionStoreContextType | undefined>(undefined);
@@ -154,11 +154,11 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
     []
   );
 
-  const loadMessages = useCallback((sessionId: string): Message[] => {
+  const loadMessages = useCallback((sessionId: string): UIMessage[] => {
     try {
       const data = localStorage.getItem(`ai-messages-${sessionId}`);
       if (data) {
-        return JSON.parse(data) as Message[];
+        return JSON.parse(data) as UIMessage[];
       }
       return [];
     } catch (error) {
@@ -167,7 +167,7 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const saveMessages = useCallback((sessionId: string, messages: Message[]) => {
+  const saveMessages = useCallback((sessionId: string, messages: UIMessage[]) => {
     try {
       localStorage.setItem(`ai-messages-${sessionId}`, JSON.stringify(messages));
     } catch (error) {

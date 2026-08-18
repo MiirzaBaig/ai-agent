@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
-import { ABORTED } from "@/lib/utils";
 import { ChatPanel } from "@/components/ChatPanel";
 import { VNCPanel } from "@/components/VNCPanel";
 import { VNCModal } from "@/components/VNCModal";
@@ -51,32 +51,38 @@ export default function Chat() {
   const { modelId, setModelId } = useModel();
   const { usage, recordRun, cost } = useUsage(currentSessionId);
 
+  // v5 no longer manages input state — we own it locally.
+  const [input, setInput] = useState("");
+
+  // Per-request body (sandboxId, modelId) changes during a session. v5 captures
+  // the transport body once, so read the latest values from refs at send time.
+  const sandboxIdRef = useRef(vncSandboxId);
+  sandboxIdRef.current = vncSandboxId;
+  const modelIdRef = useRef(modelId);
+  modelIdRef.current = modelId;
+
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
+    sendMessage,
     status,
     stop: stopGeneration,
     setMessages,
-    setInput,
   } = useChat({
-    api: "/api/chat",
     id: currentSessionId ?? undefined,
-    body: {
-      sandboxId: vncSandboxId,
-      modelId,
-    },
-    maxSteps: 30,
-    onFinish: (_message, { usage: runUsage }) => {
-      // Accumulate per-session token + cost telemetry for the model that ran.
-      if (runUsage) {
-        recordRun(modelId, {
-          promptTokens: runUsage.promptTokens,
-          completionTokens: runUsage.completionTokens,
+
+    onFinish: ({ message }) => {
+      // Total usage is attached as message metadata by the route on finish.
+      const totalUsage = (
+        message.metadata as { totalUsage?: { inputTokens?: number; outputTokens?: number } } | undefined
+      )?.totalUsage;
+      if (totalUsage) {
+        recordRun(modelIdRef.current, {
+          inputTokens: totalUsage.inputTokens,
+          outputTokens: totalUsage.outputTokens,
         });
       }
     },
+
     onError: (error) => {
       console.error(error);
       toast.error("There was an error", {
@@ -85,6 +91,14 @@ export default function Chat() {
         position: "top-center",
       });
     },
+
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      body: () => ({
+        sandboxId: sandboxIdRef.current,
+        modelId: modelIdRef.current,
+      }),
+    }),
   });
 
   // Load session data when session changes
@@ -144,38 +158,24 @@ export default function Chat() {
   }, [status, setInput]);
 
   const stop = () => {
+    // v5's stop() halts the stream and settles any in-flight tool part cleanly,
+    // so no manual result-injection is needed (unlike v4).
     stopGeneration();
-    // Clear input immediately to show placeholder - ensure it's truly empty
     setInput("");
-    // Force clear again to ensure placeholder shows
-    setTimeout(() => {
-      setInput("");
-    }, 100);
+    setTimeout(() => setInput(""), 100);
+  };
 
-    const lastMessage = messages.at(-1);
-    const lastMessageLastPart = lastMessage?.parts.at(-1);
-    if (
-      lastMessage?.role === "assistant" &&
-      lastMessageLastPart?.type === "tool-invocation"
-    ) {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        {
-          ...lastMessage,
-          parts: [
-            ...lastMessage.parts.slice(0, -1),
-            {
-              ...lastMessageLastPart,
-              toolInvocation: {
-                ...lastMessageLastPart.toolInvocation,
-                state: "result",
-                result: ABORTED,
-              },
-            },
-          ],
-        },
-      ]);
-    }
+  // v5 removed managed input + handleSubmit — bridge to the existing ChatPanel
+  // props with local state and sendMessage.
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text) return;
+    sendMessage({ text });
+    setInput("");
   };
 
   const isLoading = status !== "ready";
