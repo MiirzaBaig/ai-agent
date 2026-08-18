@@ -20,29 +20,24 @@ export const BotIcon = () => {
 };
 
 export const SentryMark = ({ size = 22 }: { size?: number }) => {
-  // The "always watching" eye — Sentry keeps an eye on the agent.
-  // Bold, geometric, friendly: reads on the lime chip and as a favicon.
+  // Terminal prompt: an agent driving a computer via commands.
+  // Bold `>` chevron + a cursor bar. Friendly + techy, reads tiny as a favicon.
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
       fill="none"
+      stroke="#111111"
+      strokeWidth="2.6"
       strokeLinejoin="round"
       strokeLinecap="round"
       aria-hidden="true"
     >
-      {/* Eye almond */}
-      <path
-        d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"
-        fill="#111111"
-      />
-      {/* Iris */}
-      <circle cx="12" cy="12" r="3.6" fill="#c2f542" />
-      {/* Pupil dot for character */}
-      <circle cx="12" cy="12" r="1.5" fill="#111111" />
-      {/* Glint */}
-      <circle cx="13.4" cy="10.6" r="0.7" fill="#ffffff" />
+      {/* Command chevron */}
+      <path d="M6 8.5 10.5 12 6 15.5" />
+      {/* Cursor / prompt bar */}
+      <path d="M13 16h5" />
     </svg>
   );
 };
