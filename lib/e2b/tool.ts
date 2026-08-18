@@ -8,8 +8,22 @@ const wait = async (seconds: number) => {
 
 export const resolution = { x: 1024, y: 768 };
 
-export const computerTool = (sandboxId: string) =>
-  anthropic.tools.computer_20251124({
+// Which computer-use tool version each model supports. The high-res
+// computer_20251124 is only on newer models; Haiku 4.5 needs the older one.
+const HIRES_COMPUTER_MODELS = new Set(["claude-opus-4-8", "claude-sonnet-5"]);
+
+type ComputerAction = {
+  action: string;
+  coordinate?: [number, number];
+  text?: string;
+  duration?: number;
+  scroll_amount?: number;
+  scroll_direction?: string;
+  start_coordinate?: [number, number];
+};
+
+export const computerTool = (sandboxId: string, model?: string) => {
+  const config = {
     displayWidthPx: resolution.x,
     displayHeightPx: resolution.y,
     displayNumber: 1,
@@ -21,7 +35,7 @@ export const computerTool = (sandboxId: string) =>
       scroll_amount,
       scroll_direction,
       start_coordinate,
-    }) => {
+    }: ComputerAction) => {
       const desktop = await getDesktop(sandboxId);
 
       switch (action) {
@@ -115,7 +129,11 @@ export const computerTool = (sandboxId: string) =>
           throw new Error(`Unsupported action: ${action}`);
       }
     },
-    toModelOutput({ output }) {
+    toModelOutput({
+      output,
+    }: {
+      output: string | { type?: string; data?: string; text?: string };
+    }) {
       if (typeof output === "string") {
         return { type: "content", value: [{ type: "text", text: output }] };
       }
@@ -139,7 +157,15 @@ export const computerTool = (sandboxId: string) =>
       }
       throw new Error("Invalid result format");
     },
-  });
+  };
+
+  // Pick the tool version the selected model supports.
+  return HIRES_COMPUTER_MODELS.has(model ?? "")
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      anthropic.tools.computer_20251124(config as any)
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      anthropic.tools.computer_20250124(config as any);
+};
 
 export const bashTool = (sandboxId?: string) =>
   anthropic.tools.bash_20250124({

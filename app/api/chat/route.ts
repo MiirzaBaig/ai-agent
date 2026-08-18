@@ -35,7 +35,10 @@ export async function POST(req: Request) {
       messages: modelMessages,
       // Multi-step agent loop (was useChat maxSteps: 30 in v4).
       stopWhen: stepCountIs(30),
-      tools: { computer: computerTool(sandboxId), bash: bashTool(sandboxId) },
+      tools: {
+        computer: computerTool(sandboxId, model),
+        bash: bashTool(sandboxId),
+      },
       providerOptions: {
         anthropic: { cacheControl: { type: "ephemeral" } },
       },
