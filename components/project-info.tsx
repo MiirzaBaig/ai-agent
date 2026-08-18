@@ -2,32 +2,67 @@ import { motion } from "motion/react";
 import { SentryMark } from "./icons";
 import { Eye, ShieldCheck, ScrollText } from "lucide-react";
 
+// One-shot entrance (plays on mount → i.e. on every page refresh).
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.2, 0.9, 0.3, 1] as const },
+  },
+};
+
 export const ProjectInfo = () => {
   return (
     <motion.div
       className="w-full flex flex-col items-center text-center px-6 pt-10 pb-6"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.2, 0.9, 0.3, 1] }}
+      variants={container}
+      initial="hidden"
+      animate="show"
     >
       {/* Terminal-prompt mark */}
-      <span className="nb-border nb-shadow flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--nb-lime)] mb-4">
+      <motion.span
+        variants={item}
+        className="nb-border nb-shadow flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--nb-lime)] mb-4"
+      >
         <SentryMark size={30} animate />
-      </span>
+      </motion.span>
 
-      <h3 className="text-2xl font-black uppercase tracking-tight text-[var(--nb-ink)]">
+      <motion.h3
+        variants={item}
+        className="text-2xl font-black uppercase tracking-tight text-[var(--nb-ink)]"
+      >
         Sentry
-      </h3>
-      <p className="mt-1.5 max-w-sm text-[13px] font-medium leading-relaxed text-zinc-600">
+      </motion.h3>
+
+      <motion.p
+        variants={item}
+        className="mt-1.5 max-w-sm text-[13px] font-medium leading-relaxed text-zinc-600"
+      >
         Drop a task in plain language —{" "}
-        <span className="bg-[var(--nb-lime)] px-1 font-bold text-[var(--nb-ink)]">
-          watch every move
+        <span className="relative inline-block font-bold text-[var(--nb-ink)]">
+          {/* lime highlight sweeps in left→right after the text lands */}
+          <motion.span
+            aria-hidden
+            className="absolute inset-0 origin-left bg-[var(--nb-lime)]"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.6, duration: 0.4, ease: "easeOut" }}
+          />
+          <span className="relative px-1">watch every move</span>
         </span>
         , keep the receipts, hold the kill switch.
-      </p>
+      </motion.p>
 
       {/* Capability chips */}
-      <div className="mt-5 flex flex-wrap justify-center gap-1.5">
+      <motion.div
+        variants={item}
+        className="mt-5 flex flex-wrap justify-center gap-1.5"
+      >
         <Chip
           icon={<Eye className="h-3 w-3" />}
           label="Watched"
@@ -43,7 +78,7 @@ export const ProjectInfo = () => {
           label="Controlled"
           color="var(--nb-pink)"
         />
-      </div>
+      </motion.div>
     </motion.div>
   );
 };
