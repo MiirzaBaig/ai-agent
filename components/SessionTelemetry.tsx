@@ -49,7 +49,7 @@ export function SessionTelemetry({ usage, cost }: SessionTelemetryProps) {
   const totalTokens = usage.inputTokens + usage.outputTokens;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b-[2.5px] border-[var(--nb-ink)] nb-paper px-4 py-2">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-zinc-300/70 nb-paper px-4 py-1.5">
       <Stat
         icon={<Activity className="h-3.5 w-3.5" />}
         label={usage.runs === 1 ? "run" : "runs"}
