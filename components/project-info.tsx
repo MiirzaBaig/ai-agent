@@ -5,49 +5,44 @@ import { Eye, ShieldCheck, ScrollText } from "lucide-react";
 export const ProjectInfo = () => {
   return (
     <motion.div
-      className="w-full px-2 sm:px-4 py-2"
+      className="w-full flex flex-col items-center text-center px-6 pt-10 pb-6"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.2, 0.9, 0.3, 1] }}
     >
-      <div className="rounded-xl nb-border nb-shadow bg-white px-4 py-3.5 flex flex-col gap-3">
-        {/* Compact wordmark row */}
-        <div className="flex items-center gap-2.5">
-          <span className="nb-border flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--nb-lime)]">
-            <SentryMark size={18} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-lg font-black uppercase tracking-tight leading-none text-[var(--nb-ink)]">
-              Sentry
-            </h3>
-          </div>
-          <p className="ml-auto text-[13px] font-medium text-zinc-600 leading-snug">
-            Drop a task —{" "}
-            <span className="bg-[var(--nb-lime)] px-1 font-bold">
-              watch every move
-            </span>
-            , keep the receipts.
-          </p>
-        </div>
+      {/* Big friendly eye */}
+      <span className="nb-border nb-shadow flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--nb-lime)] mb-4">
+        <SentryMark size={30} />
+      </span>
 
-        {/* Inline capability chips */}
-        <div className="flex flex-wrap gap-1.5">
-          <Chip
-            icon={<Eye className="h-3 w-3" />}
-            label="Watched"
-            color="var(--nb-blue)"
-          />
-          <Chip
-            icon={<ScrollText className="h-3 w-3" />}
-            label="Verified"
-            color="var(--nb-lime)"
-          />
-          <Chip
-            icon={<ShieldCheck className="h-3 w-3" />}
-            label="Controlled"
-            color="var(--nb-pink)"
-          />
-        </div>
+      <h3 className="text-2xl font-black uppercase tracking-tight text-[var(--nb-ink)]">
+        Sentry
+      </h3>
+      <p className="mt-1.5 max-w-sm text-[13px] font-medium leading-relaxed text-zinc-600">
+        Drop a task in plain language —{" "}
+        <span className="bg-[var(--nb-lime)] px-1 font-bold text-[var(--nb-ink)]">
+          watch every move
+        </span>
+        , keep the receipts, hold the kill switch.
+      </p>
+
+      {/* Capability chips */}
+      <div className="mt-5 flex flex-wrap justify-center gap-1.5">
+        <Chip
+          icon={<Eye className="h-3 w-3" />}
+          label="Watched"
+          color="var(--nb-blue)"
+        />
+        <Chip
+          icon={<ScrollText className="h-3 w-3" />}
+          label="Verified"
+          color="var(--nb-lime)"
+        />
+        <Chip
+          icon={<ShieldCheck className="h-3 w-3" />}
+          label="Controlled"
+          color="var(--nb-pink)"
+        />
       </div>
     </motion.div>
   );
