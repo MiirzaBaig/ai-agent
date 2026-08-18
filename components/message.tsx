@@ -7,6 +7,7 @@ import equal from "fast-deep-equal";
 import { Streamdown } from "streamdown";
 
 import { ABORTED, cn } from "@/lib/utils";
+import { SentryMark } from "./icons";
 import {
   Camera,
   CheckCircle,
@@ -44,19 +45,17 @@ const PurePreviewMessage = ({
       >
         <div
           className={cn(
-            "flex gap-4 w-full group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl",
+            "flex gap-2.5 w-full group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl",
             "group-data-[role=user]/message:w-fit",
           )}
         >
-          {/* {message.role === "assistant" && (
-            <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
-              <div className="translate-y-px">
-                <SparklesIcon size={14} />
-              </div>
-            </div>
-          )} */}
+          {message.role === "assistant" && (
+            <span className="nb-border flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--nb-lime)] mt-0.5">
+              <SentryMark size={16} />
+            </span>
+          )}
 
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full min-w-0">
             {message.parts?.map((part, i) => {
               switch (part.type) {
                 case "text":
@@ -68,10 +67,12 @@ const PurePreviewMessage = ({
                       className="flex flex-row gap-2 items-start w-full pb-4"
                     >
                       <div
-                        className={cn("flex flex-col gap-4", {
-                          "bg-secondary text-secondary-foreground px-3 py-2 rounded-xl":
-                            message.role === "user",
-                        })}
+                        className={cn(
+                          "flex flex-col gap-4 text-[15px] leading-relaxed",
+                          message.role === "user"
+                            ? "nb-border nb-shadow-sm bg-white text-[var(--nb-ink)] px-3.5 py-2.5 rounded-xl rounded-tr-sm font-medium"
+                            : "text-zinc-800 pt-0.5",
+                        )}
                       >
                         <Streamdown>{part.text}</Streamdown>
                       </div>
