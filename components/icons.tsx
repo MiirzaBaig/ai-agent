@@ -29,15 +29,15 @@ export const SentryMark = ({ size = 22 }: { size?: number }) => {
       viewBox="0 0 24 24"
       fill="none"
       stroke="#111111"
-      strokeWidth="2.6"
+      strokeWidth="3"
       strokeLinejoin="round"
       strokeLinecap="round"
       aria-hidden="true"
     >
-      {/* Command chevron */}
-      <path d="M6 8.5 10.5 12 6 15.5" />
+      {/* Command chevron — fills the box */}
+      <path d="M4 5 12 12 4 19" />
       {/* Cursor / prompt bar */}
-      <path d="M13 16h5" />
+      <path d="M14 18h6" />
     </svg>
   );
 };
@@ -46,8 +46,8 @@ export const SentryLogo = () => {
   return (
     <div className="flex items-center shrink-0">
       <Link className="flex flex-row items-center gap-2 group" href="/">
-        <span className="nb-border flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--nb-lime)] transition-transform duration-150 group-hover:-rotate-6">
-          <SentryMark size={16} />
+        <span className="nb-border flex h-6 w-6 items-center justify-center rounded-md bg-[var(--nb-lime)] transition-transform duration-150 group-hover:-rotate-6">
+          <SentryMark size={17} />
         </span>
         <span className="text-base font-black uppercase tracking-tight text-[var(--nb-ink)]">
           Sentry

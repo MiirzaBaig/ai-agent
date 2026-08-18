@@ -10,8 +10,8 @@ export const ProjectInfo = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.2, 0.9, 0.3, 1] }}
     >
-      {/* Big friendly eye */}
-      <span className="nb-border nb-shadow flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--nb-lime)] mb-4">
+      {/* Terminal-prompt mark */}
+      <span className="nb-border nb-shadow flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--nb-lime)] mb-4">
         <SentryMark size={30} />
       </span>
 

@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <!-- Lime rounded square with a black border, matching the logo chip -->
   <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#c2f542" stroke="#111111" stroke-width="2.5"/>
-  <!-- Terminal prompt: agent driving a computer -->
-  <g fill="none" stroke="#111111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M9 11 14 16 9 21"/>
-    <path d="M17.5 21H23"/>
+  <!-- Terminal prompt: agent driving a computer (fills the chip) -->
+  <g fill="none" stroke="#111111" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 8 16 16 8 24"/>
+    <path d="M18.5 23H25"/>
   </g>
 </svg>
