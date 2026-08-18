@@ -296,15 +296,18 @@ export default function Chat() {
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Chat Panel (Left) */}
           <ResizablePanel defaultSize={50} minSize={30} className="flex flex-col">
-            <div className="nb-paper py-3 px-4 flex justify-between items-center border-b-[2.5px] border-[var(--nb-ink)]">
-              <SentryLogo />
-              <div className="flex items-center gap-2">
-                <ModelSelector
-                  modelId={modelId}
-                  onChange={setModelId}
-                  disabled={isLoading}
-                />
-                <DeployButton />
+            {/* Floating brutalist nav pill */}
+            <div className="nb-paper px-4 pt-4 pb-3">
+              <div className="nb-border nb-shadow rounded-xl bg-white py-2 pl-3 pr-2 flex justify-between items-center">
+                <SentryLogo />
+                <div className="flex items-center gap-1.5">
+                  <ModelSelector
+                    modelId={modelId}
+                    onChange={setModelId}
+                    disabled={isLoading}
+                  />
+                  <DeployButton />
+                </div>
               </div>
             </div>
             <SessionList />
@@ -342,7 +345,8 @@ export default function Chat() {
 
       {/* Mobile View (Chat Only) */}
       <div className="w-full h-full xl:hidden flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 nb-paper py-2.5 px-3 flex justify-between items-center border-b-[2.5px] border-[var(--nb-ink)]">
+        <div className="flex-shrink-0 nb-paper px-3 pt-3 pb-3 flex">
+        <div className="nb-border nb-shadow rounded-xl bg-white py-1.5 pl-2.5 pr-1.5 flex flex-1 justify-between items-center">
           <SentryLogo />
           <div className="flex items-center gap-1.5">
             {/* VNC Toggle Button in Header */}
@@ -370,6 +374,7 @@ export default function Chat() {
             />
             <DeployButton />
           </div>
+        </div>
         </div>
         <SessionList />
         {usage.runs > 0 && <SessionTelemetry usage={usage} cost={cost} />}

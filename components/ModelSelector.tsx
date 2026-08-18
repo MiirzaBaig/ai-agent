@@ -46,7 +46,7 @@ export function ModelSelector({
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "nb-border nb-shadow-sm nb-press flex items-center gap-1.5 h-9 pl-2.5 pr-2 rounded-lg bg-white text-xs font-black uppercase tracking-wide text-[var(--nb-ink)]",
+          "nb-border nb-shadow-sm nb-press flex items-center gap-1.5 h-7 pl-2 pr-1.5 rounded-lg bg-white text-[11px] font-black uppercase tracking-wide text-[var(--nb-ink)]",
           disabled && "opacity-50 cursor-not-allowed",
         )}
         aria-haspopup="listbox"

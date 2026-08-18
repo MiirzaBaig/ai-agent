@@ -81,7 +81,7 @@ const Chip = ({
  */
 export const DeployButton = () => {
   return (
-    <div className="flex flex-row gap-1.5 items-center rounded-lg nb-border nb-shadow-sm bg-[var(--nb-violet)] px-2.5 py-1.5 text-xs font-black uppercase tracking-wide text-white">
+    <div className="flex flex-row gap-1.5 items-center rounded-lg nb-border nb-shadow-sm bg-[var(--nb-violet)] px-2 py-1 text-[11px] font-black uppercase tracking-wide text-white">
       <span className="h-1.5 w-1.5 rounded-full bg-[var(--nb-lime)]" />
       <span>v2</span>
     </div>

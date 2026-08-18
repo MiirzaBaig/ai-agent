@@ -50,18 +50,13 @@ export const SentryMark = ({ size = 22 }: { size?: number }) => {
 export const SentryLogo = () => {
   return (
     <div className="flex items-center shrink-0">
-      <Link className="flex flex-row items-center gap-2.5" href="/">
-        <span className="nb-border nb-shadow-sm flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--nb-lime)]">
-          <SentryMark size={20} />
+      <Link className="flex flex-row items-center gap-2 group" href="/">
+        <span className="nb-border flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--nb-lime)] transition-transform duration-150 group-hover:-rotate-6">
+          <SentryMark size={16} />
         </span>
-        <div className="flex flex-col leading-none">
-          <span className="text-xl font-black uppercase tracking-tight text-[var(--nb-ink)]">
-            Sentry
-          </span>
-          <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-500">
-            computer-use agent
-          </span>
-        </div>
+        <span className="text-base font-black uppercase tracking-tight text-[var(--nb-ink)]">
+          Sentry
+        </span>
       </Link>
     </div>
   );
