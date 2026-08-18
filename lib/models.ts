@@ -43,7 +43,10 @@ export const MODELS: ModelInfo[] = [
   },
 ];
 
-export const DEFAULT_MODEL_ID: ModelId = "claude-opus-4-8";
+// Sonnet 5 is the sweet spot for computer-use: much smarter than Haiku per
+// step (fewer wrong clicks → fewer steps → faster + cheaper to finish a task),
+// at lower per-token cost than Opus.
+export const DEFAULT_MODEL_ID: ModelId = "claude-sonnet-5";
 
 const MODELS_BY_ID = new Map(MODELS.map((m) => [m.id, m]));
 

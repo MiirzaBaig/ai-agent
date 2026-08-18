@@ -50,9 +50,21 @@ const PurePreviewMessage = ({
           )}
         >
           {message.role === "assistant" && (
-            <span className="nb-border flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--nb-lime)] mt-0.5">
+            <motion.span
+              className="nb-border flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--nb-lime)] mt-0.5"
+              animate={
+                isLatestMessage && status !== "ready"
+                  ? { scale: [1, 1.12, 1], opacity: [1, 0.7, 1] }
+                  : { scale: 1, opacity: 1 }
+              }
+              transition={
+                isLatestMessage && status !== "ready"
+                  ? { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                  : { duration: 0.2 }
+              }
+            >
               <SentryMark size={16} />
-            </span>
+            </motion.span>
           )}
 
           <div className="flex flex-col w-full min-w-0">
