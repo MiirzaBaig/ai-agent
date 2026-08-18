@@ -17,8 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI SDK Computer Use Demo",
-  description: "A Next.js app that uses the AI SDK and Anthropic to create a computer using agent.",
+  title: "Sentry — Autonomous Computer-Use Agent",
+  description:
+    "Delegate a task and watch an autonomous agent carry it out on a live desktop — with a full evidence trail of every step and approval gates on destructive actions.",
 };
 
 export const viewport = {

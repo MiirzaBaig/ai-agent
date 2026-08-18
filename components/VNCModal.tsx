@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { X, Monitor } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Monitor, ShieldCheck } from "lucide-react";
 import { VNCViewer } from "@/components/VNCViewer";
+import { EvidenceTimeline } from "@/components/EvidenceTimeline";
 import { Button } from "@/components/ui/button";
 import { ToolCallDetails } from "@/components/ToolCallDetails";
 import { useEventStore } from "@/lib/events/store";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "@/lib/utils";
 
 interface VNCModalProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ export function VNCModal({
   isStreaming = false,
 }: VNCModalProps) {
   const { events } = useEventStore();
+  const [tab, setTab] = useState<"desktop" | "evidence">("desktop");
   const selectedEvent = selectedToolCallId
     ? events.find((e) => e.id === selectedToolCallId)
     : null;
@@ -81,26 +84,55 @@ export function VNCModal({
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900">
-              <div className="flex items-center gap-2">
-                <Monitor className="h-5 w-5 text-white" />
-                <h2 className="text-lg font-semibold text-white">VNC Viewer</h2>
-                {isStreaming && (
-                  <span className="flex items-center gap-1.5 text-xs text-amber-400">
+            <div className="flex items-center justify-between p-4 border-b-[2.5px] border-[var(--nb-ink)] bg-zinc-900">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setTab("desktop")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-black uppercase tracking-wide transition-colors min-h-[40px] border-2",
+                    tab === "desktop"
+                      ? "bg-[var(--nb-lime)] text-[var(--nb-ink)] border-[var(--nb-lime)]"
+                      : "text-zinc-400 border-transparent active:bg-zinc-800/50",
+                  )}
+                >
+                  <Monitor className="h-4 w-4" />
+                  <span>Desktop</span>
+                </button>
+                <button
+                  onClick={() => setTab("evidence")}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-black uppercase tracking-wide transition-colors min-h-[40px] border-2",
+                    tab === "evidence"
+                      ? "bg-[var(--nb-lime)] text-[var(--nb-ink)] border-[var(--nb-lime)]"
+                      : "text-zinc-400 border-transparent active:bg-zinc-800/50",
+                  )}
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Evidence</span>
+                  {events.length > 0 && (
+                    <span className="ml-0.5 rounded-md bg-[var(--nb-ink)] px-1.5 py-px text-[10px] font-bold tabular-nums text-[var(--nb-lime)]">
+                      {events.length}
+                    </span>
+                  )}
+                </button>
+                {tab === "desktop" && isStreaming && (
+                  <span className="ml-2 flex items-center gap-1.5 text-xs text-amber-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                     Agent Working
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  onClick={onRefreshDesktop}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-2 h-10 min-h-[44px]"
-                  disabled={isInitializing}
-                  size="sm"
-                >
-                  {isInitializing ? "Creating..." : "Refresh"}
-                </Button>
+                {tab === "desktop" && (
+                  <Button
+                    onClick={onRefreshDesktop}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-2 h-10 min-h-[44px]"
+                    disabled={isInitializing}
+                    size="sm"
+                  >
+                    {isInitializing ? "Creating..." : "Refresh"}
+                  </Button>
+                )}
                 <Button
                   onClick={onClose}
                   className="bg-zinc-800 hover:bg-zinc-700 text-white p-2 h-10 w-10 min-h-[44px] min-w-[44px]"
@@ -112,13 +144,19 @@ export function VNCModal({
               </div>
             </div>
 
-            {/* VNC Viewer */}
-            <div className="flex-1 relative overflow-hidden">
-              <VNCViewer streamUrl={streamUrl} />
-            </div>
+            {/* Body: Desktop or Evidence */}
+            {tab === "evidence" ? (
+              <div className="flex-1 min-h-0 bg-zinc-50">
+                <EvidenceTimeline />
+              </div>
+            ) : (
+              <div className="flex-1 relative overflow-hidden">
+                <VNCViewer streamUrl={streamUrl} />
+              </div>
+            )}
 
             {/* Tool Call Details */}
-            {selectedEvent && (
+            {tab === "desktop" && selectedEvent && (
               <motion.div
                 initial={{ height: 0 }}
                 animate={{ height: "auto" }}

@@ -72,7 +72,7 @@ export const Input = ({
           <input
             ref={inputRef}
             type="text"
-            className="w-full h-12 sm:h-14 px-4 pr-14 sm:pr-14 text-base sm:text-sm bg-white dark:bg-zinc-900 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-800 transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-lg placeholder:text-zinc-400 dark:placeholder:text-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-13 sm:h-14 px-4 pr-16 text-base sm:text-sm font-semibold bg-white text-[var(--nb-ink)] rounded-xl nb-border nb-shadow focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 transition-transform duration-100 placeholder:font-medium placeholder:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
             value={input ?? ""}
             placeholder="Tell me what to do..."
             onChange={handleInputChange}
@@ -84,7 +84,7 @@ export const Input = ({
         <motion.button
           type="button"
           onClick={stop}
-          className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 rounded-full h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-red-600 hover:bg-red-700 active:bg-red-800 touch-manipulation shadow-lg transition-all duration-200"
+          className="cursor-pointer absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-[var(--nb-pink)] nb-border nb-shadow-sm touch-manipulation"
           title="Stop generation"
           aria-label="Stop generation"
           animate={{
@@ -107,7 +107,7 @@ export const Input = ({
         <motion.button
           type="submit"
           disabled={isLoading || !input?.trim() || isInitializing}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-black hover:bg-zinc-800 active:bg-zinc-900 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-all duration-200 touch-manipulation shadow-lg"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-[var(--nb-lime)] nb-border nb-shadow-sm disabled:bg-zinc-200 disabled:shadow-none disabled:cursor-not-allowed touch-manipulation"
           animate={{
             scale: input?.trim() ? 1 : 0.96,
             boxShadow: input?.trim() 

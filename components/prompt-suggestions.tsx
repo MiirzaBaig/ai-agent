@@ -4,16 +4,19 @@ import { useState } from "react";
 
 const suggestions = [
   {
-    text: "What's the weather in Dubai?",
-    prompt: "What's the weather in Dubai?",
+    text: "Research a topic online",
+    prompt:
+      "Open a browser, search for the latest news on AI agents, and summarize the top 3 headlines.",
   },
   {
-    text: "Create a text file",
-    prompt: "Create a new text file called notes.txt with some sample content",
+    text: "Draft a file from research",
+    prompt:
+      "Look up today's weather in Dubai, then save a short report to weather.txt.",
   },
   {
-    text: "Check system info",
-    prompt: "Show me the system information and current time",
+    text: "Inspect the environment",
+    prompt:
+      "Show me the system information, current time, and the contents of the home directory.",
   },
 ];
 
@@ -43,8 +46,8 @@ export const PromptSuggestions = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
-        <Sparkles className="h-3.5 w-3.5 text-zinc-400" />
-        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        <Sparkles className="h-3.5 w-3.5 text-[var(--nb-ink)]" />
+        <span className="text-xs font-black text-[var(--nb-ink)] uppercase tracking-[0.14em]">
           Try asking
         </span>
       </motion.div>
@@ -54,7 +57,7 @@ export const PromptSuggestions = ({
             key={index}
             onClick={() => handleClick(suggestion.prompt, index)}
             disabled={disabled}
-            className="group px-3 py-1.5 rounded-lg text-sm font-medium text-zinc-700 bg-zinc-50 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200 hover:border-zinc-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-zinc-50 disabled:hover:text-zinc-700"
+            className="group px-3 py-1.5 rounded-lg text-sm font-bold text-[var(--nb-ink)] bg-white nb-border nb-shadow-sm nb-press hover:bg-[var(--nb-lime)] disabled:opacity-50 disabled:cursor-not-allowed"
             initial={{ opacity: 0, scale: 0.9, y: 10 }}
             animate={{
               opacity: 1,

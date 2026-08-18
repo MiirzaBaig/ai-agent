@@ -37,8 +37,14 @@ function createEventFromToolCall(
   if (!eventType) return null;
 
   const timestamp = Date.now();
+  const wasBlocked =
+    typeof result === "string" && result.startsWith("⛔ Blocked");
   const status: AgentEvent["status"] =
-    state === "call" ? "pending" : result === "User aborted" ? "error" : "complete";
+    state === "call"
+      ? "pending"
+      : result === "User aborted" || wasBlocked
+        ? "error"
+        : "complete";
 
   const baseEvent = {
     id: toolCallId,
@@ -203,8 +209,11 @@ export function useExtractEvents(messages: Message[], sessionId: string) {
         // Update existing event only if status changed
         if (toolCall.state === "result" && existingEvent.status === "pending") {
           const duration = Date.now() - existingEvent.timestamp;
+          const blocked =
+            typeof toolCall.result === "string" &&
+            toolCall.result.startsWith("⛔ Blocked");
           const status: AgentEvent["status"] =
-            toolCall.result === "User aborted" ? "error" : "complete";
+            toolCall.result === "User aborted" || blocked ? "error" : "complete";
           updateEvent(toolCall.id, status, duration);
         }
       }

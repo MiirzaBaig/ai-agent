@@ -79,7 +79,7 @@ export function ChatPanel({
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-white overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 nb-paper nb-grid overflow-hidden">
       {/* Messages Area */}
       <div
         className="flex-1 min-h-0 space-y-4 py-4 overflow-y-auto px-4"
@@ -111,7 +111,7 @@ export function ChatPanel({
       )}
 
       {/* Input Area */}
-      <div className="flex-shrink-0 border-t border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/50 backdrop-blur-sm">
+      <div className="flex-shrink-0 border-t-[2.5px] border-[var(--nb-ink)] nb-paper">
         <form
           onSubmit={handleSubmit}
           className="p-4 sm:p-5"

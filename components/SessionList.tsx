@@ -68,7 +68,7 @@ export function SessionList() {
             height: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
             opacity: { duration: 0.15, ease: "easeOut" },
           }}
-          className="overflow-hidden flex-shrink-0 border-b border-zinc-200/60 bg-zinc-50/50 backdrop-blur-sm"
+          className="overflow-hidden flex-shrink-0 border-b-[2.5px] border-[var(--nb-ink)] nb-paper"
         >
           <motion.div
             initial={{ y: -8 }}
@@ -79,11 +79,11 @@ export function SessionList() {
             {/* Desktop View */}
             <div className="hidden sm:block px-4 py-2.5">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.14em]">
                   Sessions
                 </h3>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-2">
                 {sessions.map((session) => (
                   <motion.div
                     key={session.id}
@@ -91,10 +91,10 @@ export function SessionList() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className={cn(
-                      "group flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs cursor-pointer transition-all duration-200",
+                      "group flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer nb-border nb-shadow-sm nb-press",
                       currentSessionId === session.id
-                        ? "bg-zinc-900 text-white shadow-md"
-                        : "bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 hover:shadow-sm"
+                        ? "bg-[var(--nb-ink)] text-white"
+                        : "bg-white text-[var(--nb-ink)]"
                     )}
                     onClick={() => switchSession(session.id)}
                   >
@@ -123,15 +123,11 @@ export function SessionList() {
                 <motion.button
                   onClick={createSession}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium",
-                    "border-2 border-dashed border-zinc-300 text-zinc-500",
-                    "bg-transparent hover:bg-white hover:border-zinc-400 hover:text-zinc-700",
-                    "transition-all duration-200 cursor-pointer"
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wide",
+                    "nb-border nb-shadow-sm nb-press bg-[var(--nb-lime)] text-[var(--nb-ink)] cursor-pointer"
                   )}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-3.5 w-3.5" strokeWidth={3} />
                   <span className="whitespace-nowrap">New</span>
                 </motion.button>
               </div>
@@ -145,10 +141,10 @@ export function SessionList() {
                     key={session.id}
                     layout
                     className={cn(
-                      "flex items-center gap-2 px-3.5 py-2 rounded-full text-sm cursor-pointer transition-all duration-200 whitespace-nowrap flex-shrink-0",
+                      "flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-bold cursor-pointer whitespace-nowrap flex-shrink-0 nb-border nb-shadow-sm",
                       currentSessionId === session.id
-                        ? "bg-zinc-900 text-white shadow-md"
-                        : "bg-white text-zinc-600 border border-zinc-200 active:bg-zinc-100"
+                        ? "bg-[var(--nb-ink)] text-white"
+                        : "bg-white text-[var(--nb-ink)]"
                     )}
                     onClick={() => switchSession(session.id)}
                   >
@@ -175,15 +171,13 @@ export function SessionList() {
                 <motion.button
                   onClick={createSession}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium flex-shrink-0",
-                    "border-2 border-dashed border-zinc-300 text-zinc-500",
-                    "bg-transparent active:bg-zinc-50",
-                    "transition-all duration-200 cursor-pointer whitespace-nowrap",
-                    "min-h-[40px]"
+                    "flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-black uppercase tracking-wide flex-shrink-0",
+                    "nb-border nb-shadow-sm bg-[var(--nb-lime)] text-[var(--nb-ink)]",
+                    "cursor-pointer whitespace-nowrap min-h-[40px]"
                   )}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                  <Plus className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={3} />
                   <span>New</span>
                 </motion.button>
               </div>

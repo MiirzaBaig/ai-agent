@@ -1,5 +1,6 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { getDesktop } from "./utils";
+import { classifyCommand, blockMessage } from "./guard";
 
 const wait = async (seconds: number) => {
   await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
@@ -137,6 +138,14 @@ export const computerTool = (sandboxId: string) =>
 export const bashTool = (sandboxId?: string) =>
   anthropic.tools.bash_20250124({
     execute: async ({ command }) => {
+      // Approval gate: refuse irreversible / system-level commands rather than
+      // running them unattended. The agent is told to ask the user first.
+      const risk = classifyCommand(command);
+      if (!risk.allowed) {
+        console.warn(`[approval-gate] blocked command: ${command}`);
+        return blockMessage(risk);
+      }
+
       const desktop = await getDesktop(sandboxId);
 
       try {

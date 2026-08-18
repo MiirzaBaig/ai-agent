@@ -19,19 +19,48 @@ export const BotIcon = () => {
   );
 };
 
-export const AISDKLogo = () => {
+export const SentryMark = ({ size = 22 }: { size?: number }) => {
+  // Shield + check: watched, verified, controlled.
   return (
-    <div className="flex justify-between items-center">
-      <div className="flex flex-row items-center gap-1.5 shrink-0">
-        <Link className="flex flex-row items-center gap-1.5" href="/">
-          <div className="text-lg sm:text-xl font-semibold text-zinc-800 dark:text-zinc-100">
-            AI{" "}
-            <span className="hidden sm:inline">
-              SDK
-            </span>
-          </div>
-        </Link>
-      </div>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      strokeLinejoin="round"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 2.5 4 5.5v6c0 4.5 3.2 7.9 8 10 4.8-2.1 8-5.5 8-10v-6l-8-3Z"
+        fill="#111111"
+      />
+      <path
+        d="m8.5 12 2.5 2.5 4.5-5"
+        stroke="#c2f542"
+        strokeWidth="2"
+        fill="none"
+      />
+    </svg>
+  );
+};
+
+export const SentryLogo = () => {
+  return (
+    <div className="flex items-center shrink-0">
+      <Link className="flex flex-row items-center gap-2.5" href="/">
+        <span className="nb-border nb-shadow-sm flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--nb-lime)]">
+          <SentryMark size={20} />
+        </span>
+        <div className="flex flex-col leading-none">
+          <span className="text-xl font-black uppercase tracking-tight text-[var(--nb-ink)]">
+            Sentry
+          </span>
+          <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+            computer-use agent
+          </span>
+        </div>
+      </Link>
     </div>
   );
 };

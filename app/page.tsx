@@ -17,8 +17,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { AISDKLogo } from "@/components/icons";
+import { SentryLogo } from "@/components/icons";
 import { DeployButton } from "@/components/project-info";
+import { ModelSelector } from "@/components/ModelSelector";
+import { SessionTelemetry } from "@/components/SessionTelemetry";
+import { useModel } from "@/lib/use-model";
+import { useUsage } from "@/lib/use-usage";
 import { Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,6 +48,9 @@ export default function Chat() {
 
   const { loadEvents, clearEvents } = useEventStore();
 
+  const { modelId, setModelId } = useModel();
+  const { usage, recordRun, cost } = useUsage(currentSessionId);
+
   const {
     messages,
     input,
@@ -58,8 +65,18 @@ export default function Chat() {
     id: currentSessionId ?? undefined,
     body: {
       sandboxId: vncSandboxId,
+      modelId,
     },
     maxSteps: 30,
+    onFinish: (_message, { usage: runUsage }) => {
+      // Accumulate per-session token + cost telemetry for the model that ran.
+      if (runUsage) {
+        recordRun(modelId, {
+          promptTokens: runUsage.promptTokens,
+          completionTokens: runUsage.completionTokens,
+        });
+      }
+    },
     onError: (error) => {
       console.error(error);
       toast.error("There was an error", {
@@ -279,11 +296,21 @@ export default function Chat() {
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Chat Panel (Left) */}
           <ResizablePanel defaultSize={50} minSize={30} className="flex flex-col">
-            <div className="bg-white py-2.5 px-3 sm:py-3 sm:px-4 flex justify-between items-center border-b border-zinc-200/60">
-              <AISDKLogo />
-              <DeployButton />
+            <div className="nb-paper py-3 px-4 flex justify-between items-center border-b-[2.5px] border-[var(--nb-ink)]">
+              <SentryLogo />
+              <div className="flex items-center gap-2">
+                <ModelSelector
+                  modelId={modelId}
+                  onChange={setModelId}
+                  disabled={isLoading}
+                />
+                <DeployButton />
+              </div>
             </div>
             <SessionList />
+            {usage.runs > 0 && (
+              <SessionTelemetry usage={usage} cost={cost} />
+            )}
             <ChatPanel
               messages={messages}
               input={input}
@@ -315,8 +342,8 @@ export default function Chat() {
 
       {/* Mobile View (Chat Only) */}
       <div className="w-full h-full xl:hidden flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 bg-white py-2.5 px-3 flex justify-between items-center border-b border-zinc-200/60">
-          <AISDKLogo />
+        <div className="flex-shrink-0 nb-paper py-2.5 px-3 flex justify-between items-center border-b-[2.5px] border-[var(--nb-ink)]">
+          <SentryLogo />
           <div className="flex items-center gap-1.5">
             {/* VNC Toggle Button in Header */}
             <Button
@@ -324,8 +351,8 @@ export default function Chat() {
               size="sm"
               variant="outline"
               className={cn(
-                "h-8 px-2.5 gap-1.5 rounded-lg border-zinc-300 text-xs",
-                vncStreamUrl && "border-green-500 bg-green-50"
+                "h-8 px-2.5 gap-1.5 rounded-lg nb-border nb-shadow-sm bg-white text-xs font-bold",
+                vncStreamUrl && "bg-[var(--nb-lime)]"
               )}
             >
               <Monitor className="h-3.5 w-3.5 flex-shrink-0" />
@@ -336,10 +363,16 @@ export default function Chat() {
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
               )}
             </Button>
+            <ModelSelector
+              modelId={modelId}
+              onChange={setModelId}
+              disabled={isLoading}
+            />
             <DeployButton />
           </div>
         </div>
         <SessionList />
+        {usage.runs > 0 && <SessionTelemetry usage={usage} cost={cost} />}
         <div className="flex-1 min-h-0 flex flex-col">
           <ChatPanel
             messages={messages}

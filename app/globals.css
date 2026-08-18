@@ -149,5 +149,65 @@
 /* Ensure placeholder is always visible */
 input::placeholder {
   opacity: 1 !important;
-  color: #a1a1aa !important; /* zinc-400 */
+  color: #71717a !important; /* zinc-500 */
+}
+
+/* ============================================================
+   NEO-BRUTALIST DESIGN SYSTEM  (Sentry v2 — Gen-Z restyle)
+   Thick borders, hard offset shadows, loud lime/violet accents.
+   ============================================================ */
+@layer utilities {
+  :root {
+    --nb-ink: #111111;
+    --nb-paper: #f5f3eb; /* warm off-white canvas */
+    --nb-lime: #c2f542;
+    --nb-violet: #a855f7;
+    --nb-pink: #ff5c8a;
+    --nb-blue: #4d7cff;
+  }
+
+  /* Hard offset shadow — the signature brutalist element. */
+  .nb-shadow {
+    box-shadow: 4px 4px 0 0 var(--nb-ink);
+  }
+  .nb-shadow-sm {
+    box-shadow: 2px 2px 0 0 var(--nb-ink);
+  }
+  .nb-shadow-lg {
+    box-shadow: 6px 6px 0 0 var(--nb-ink);
+  }
+
+  /* Thick black border. */
+  .nb-border {
+    border: 2.5px solid var(--nb-ink);
+  }
+
+  /* Interactive "press" — button slides into its shadow. */
+  .nb-press {
+    transition:
+      transform 0.08s ease,
+      box-shadow 0.08s ease;
+  }
+  .nb-press:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 0 var(--nb-ink);
+  }
+  .nb-press:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 0 var(--nb-ink);
+  }
+
+  .nb-paper {
+    background-color: var(--nb-paper);
+  }
+
+  /* Dotted grid texture for empty canvas areas. */
+  .nb-grid {
+    background-image: radial-gradient(
+      circle,
+      rgba(17, 17, 17, 0.12) 1.2px,
+      transparent 1.2px
+    );
+    background-size: 22px 22px;
+  }
 }
