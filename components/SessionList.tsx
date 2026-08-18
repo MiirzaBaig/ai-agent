@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { useSessionStore } from "@/lib/sessions/store";
-import { useScrollState } from "@/lib/scroll-state";
 import { Plus, Trash2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,66 +14,9 @@ export function SessionList() {
     deleteSession,
   } = useSessionStore();
 
-  const [isVisible, setIsVisible] = useState(true);
-  const { isScrollingDown, scrollTop } = useScrollState();
-  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // React to scroll state changes
-  useEffect(() => {
-    // Clear any pending timeout
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-
-    // Always show when near top
-    if (scrollTop < 30) {
-      setIsVisible(true);
-      return;
-    }
-
-    // Hide when scrolling down past threshold
-    if (isScrollingDown && scrollTop > 50) {
-      setIsVisible(false);
-    }
-    // Show when scrolling up
-    else if (!isScrollingDown) {
-      setIsVisible(true);
-    }
-
-    // Auto-show after inactivity
-    hideTimeoutRef.current = setTimeout(() => {
-      if (scrollTop < 100) {
-        setIsVisible(true);
-      }
-    }, 1200);
-
-    return () => {
-      if (hideTimeoutRef.current) {
-        clearTimeout(hideTimeoutRef.current);
-      }
-    };
-  }, [isScrollingDown, scrollTop]);
-
   return (
-    <AnimatePresence mode="wait">
-      {isVisible && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{
-            height: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
-            opacity: { duration: 0.15, ease: "easeOut" },
-          }}
-          className="overflow-hidden flex-shrink-0 nb-paper"
-        >
-          <motion.div
-            initial={{ y: -8 }}
-            animate={{ y: 0 }}
-            exit={{ y: -8 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-          >
+    <div className="flex-shrink-0 nb-paper">
+          <div>
             {/* Desktop View — inline label + compact pills, no slab border */}
             <div className="hidden sm:flex items-center gap-2 px-4 pb-2 pt-0.5">
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.16em] flex-shrink-0">
@@ -178,9 +119,7 @@ export function SessionList() {
                 </motion.button>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </div>
+    </div>
   );
 }
