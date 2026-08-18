@@ -20,7 +20,8 @@ export const BotIcon = () => {
 };
 
 export const SentryMark = ({ size = 22 }: { size?: number }) => {
-  // Shield + check: watched, verified, controlled.
+  // The "always watching" eye — Sentry keeps an eye on the agent.
+  // Bold, geometric, friendly: reads on the lime chip and as a favicon.
   return (
     <svg
       width={size}
@@ -31,16 +32,17 @@ export const SentryMark = ({ size = 22 }: { size?: number }) => {
       strokeLinecap="round"
       aria-hidden="true"
     >
+      {/* Eye almond */}
       <path
-        d="M12 2.5 4 5.5v6c0 4.5 3.2 7.9 8 10 4.8-2.1 8-5.5 8-10v-6l-8-3Z"
+        d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"
         fill="#111111"
       />
-      <path
-        d="m8.5 12 2.5 2.5 4.5-5"
-        stroke="#c2f542"
-        strokeWidth="2"
-        fill="none"
-      />
+      {/* Iris */}
+      <circle cx="12" cy="12" r="3.6" fill="#c2f542" />
+      {/* Pupil dot for character */}
+      <circle cx="12" cy="12" r="1.5" fill="#111111" />
+      {/* Glint */}
+      <circle cx="13.4" cy="10.6" r="0.7" fill="#ffffff" />
     </svg>
   );
 };

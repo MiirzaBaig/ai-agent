@@ -10,48 +10,41 @@ export const ProjectInfo = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.2, 0.9, 0.3, 1] }}
     >
-      <div className="rounded-2xl nb-border nb-shadow-lg bg-white p-6 flex flex-col gap-5">
-        {/* Wordmark block */}
-        <div className="flex items-center gap-3">
-          <span className="nb-border nb-shadow-sm flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--nb-lime)]">
-            <SentryMark size={26} />
+      <div className="rounded-xl nb-border nb-shadow bg-white px-4 py-3.5 flex flex-col gap-3">
+        {/* Compact wordmark row */}
+        <div className="flex items-center gap-2.5">
+          <span className="nb-border flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--nb-lime)]">
+            <SentryMark size={18} />
           </span>
-          <div>
-            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none text-[var(--nb-ink)]">
+          <div className="min-w-0">
+            <h3 className="text-lg font-black uppercase tracking-tight leading-none text-[var(--nb-ink)]">
               Sentry
             </h3>
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-500">
-              Autonomous computer-use agent
-            </p>
           </div>
+          <p className="ml-auto text-[13px] font-medium text-zinc-600 leading-snug">
+            Drop a task —{" "}
+            <span className="bg-[var(--nb-lime)] px-1 font-bold">
+              watch every move
+            </span>
+            , keep the receipts.
+          </p>
         </div>
 
-        <p className="text-[15px] font-medium leading-relaxed text-zinc-700">
-          Drop a task in plain language. Sentry takes the wheel of a real
-          desktop in a sandbox and gets it done —{" "}
-          <span className="bg-[var(--nb-lime)] px-1 font-bold">
-            you watch every move
-          </span>
-          , keep the receipts, and hold the kill switch.
-        </p>
-
-        <div className="grid grid-cols-3 gap-2.5">
-          <Feature
-            icon={<Eye className="h-5 w-5" />}
+        {/* Inline capability chips */}
+        <div className="flex flex-wrap gap-1.5">
+          <Chip
+            icon={<Eye className="h-3 w-3" />}
             label="Watched"
-            detail="Live desktop"
             color="var(--nb-blue)"
           />
-          <Feature
-            icon={<ScrollText className="h-5 w-5" />}
+          <Chip
+            icon={<ScrollText className="h-3 w-3" />}
             label="Verified"
-            detail="Evidence trail"
             color="var(--nb-lime)"
           />
-          <Feature
-            icon={<ShieldCheck className="h-5 w-5" />}
+          <Chip
+            icon={<ShieldCheck className="h-3 w-3" />}
             label="Controlled"
-            detail="Approval gates"
             color="var(--nb-pink)"
           />
         </div>
@@ -60,32 +53,25 @@ export const ProjectInfo = () => {
   );
 };
 
-const Feature = ({
+const Chip = ({
   icon,
   label,
-  detail,
   color,
 }: {
   icon: React.ReactNode;
   label: string;
-  detail: string;
   color: string;
 }) => {
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-xl nb-border nb-shadow-sm bg-white px-2 py-3 text-center">
+    <span className="inline-flex items-center gap-1.5 rounded-md nb-border bg-white pl-1 pr-2 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--nb-ink)]">
       <span
-        className="nb-border flex h-8 w-8 items-center justify-center rounded-lg text-[var(--nb-ink)]"
+        className="flex h-4 w-4 items-center justify-center rounded"
         style={{ backgroundColor: color }}
       >
         {icon}
       </span>
-      <span className="text-xs font-black uppercase tracking-wide text-[var(--nb-ink)]">
-        {label}
-      </span>
-      <span className="text-[9px] font-bold uppercase tracking-wide text-zinc-400">
-        {detail}
-      </span>
-    </div>
+      {label}
+    </span>
   );
 };
 
