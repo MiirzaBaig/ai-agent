@@ -1,40 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import {
-  Activity,
-  Chrome,
-  ExternalLink,
-  Film,
-  Radio,
-  RefreshCcw,
-} from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import { Activity, Film, ShieldCheck } from "lucide-react";
 import { EvidenceTimeline } from "@/components/EvidenceTimeline";
+import { LiveFilmstrip } from "@/components/LiveFilmstrip";
 import { ReplayScrubber } from "@/components/ReplayScrubber";
 import { useEventStore } from "@/lib/events/store";
 
 /**
- * Right-hand panel: live browser view when Browserbase provides one, plus the
- * evidence timeline and replay controls.
+ * Right-hand panel: the live evidence feed (per-step screenshots + text the
+ * agent actually saw) and replay controls. Each action is captured as it
+ * happens, so this doubles as the real-time view of what the browser is doing.
  */
 export function ActivityPanel({
   isConnected,
   isStreaming,
-  liveViewUrl,
-  provider,
-  onRefreshLiveView,
 }: {
   isConnected: boolean;
   isStreaming?: boolean;
-  liveViewUrl?: string | null;
-  provider?: string | null;
-  onRefreshLiveView?: () => Promise<void> | void;
 }) {
   const { events } = useEventStore();
   const [showReplay, setShowReplay] = useState(false);
-  const [isFrameLoaded, setIsFrameLoaded] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Live elapsed timer while the agent is working.
   const [elapsed, setElapsed] = useState(0);
@@ -45,41 +32,16 @@ export function ActivityPanel({
     return () => clearInterval(t);
   }, [isStreaming]);
 
-  const isBrowserbase = provider === "browserbase";
-  const showLiveBrowser = Boolean(liveViewUrl);
-
-  useEffect(() => {
-    setIsFrameLoaded(false);
-  }, [liveViewUrl]);
-
-  useEffect(() => {
-    if (!isBrowserbase || liveViewUrl || !onRefreshLiveView) return;
-    const t = setTimeout(() => {
-      void onRefreshLiveView();
-    }, 900);
-    return () => clearTimeout(t);
-  }, [isBrowserbase, liveViewUrl, onRefreshLiveView]);
-
-  const refresh = async () => {
-    if (!onRefreshLiveView) return;
-    setIsRefreshing(true);
-    try {
-      await onRefreshLiveView();
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
   return (
     <div className="relative flex h-full flex-col bg-zinc-950">
       {/* Header */}
       <div className="flex items-center justify-between border-b-[2.5px] border-[var(--nb-ink)] bg-zinc-900 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="nb-border flex h-6 w-6 items-center justify-center rounded-md bg-[var(--nb-lime)]">
-            <Chrome className="h-3.5 w-3.5 text-[var(--nb-ink)]" />
+            <ShieldCheck className="h-3.5 w-3.5 text-[var(--nb-ink)]" />
           </span>
           <span className="text-xs font-black uppercase tracking-wide text-white">
-            Live Browser
+            Evidence
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -114,98 +76,10 @@ export function ActivityPanel({
         </div>
       </div>
 
-      {/* Live browser surface. */}
-      <div className="border-b-[2.5px] border-[var(--nb-ink)] bg-zinc-950 p-3">
-        <motion.div
-          initial={{ opacity: 0, y: 8, filter: "blur(6px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.32, ease: [0.2, 0.9, 0.3, 1] }}
-          className="nb-border nb-shadow-sm overflow-hidden rounded-xl bg-white"
-        >
-          <div className="flex h-9 items-center gap-2 border-b-[2.5px] border-[var(--nb-ink)] bg-zinc-100 px-3">
-            <div className="flex gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-            </div>
-            <div className="min-w-0 flex-1 rounded-md border-2 border-zinc-300 bg-white px-2 py-0.5 font-mono text-[10px] text-zinc-500">
-              <span className="block truncate">
-                {showLiveBrowser
-                  ? "browserbase://live-session"
-                  : isBrowserbase
-                    ? "browserbase://starting"
-                    : "local-chrome://external-window"}
-              </span>
-            </div>
-            {showLiveBrowser && (
-              <a
-                href={liveViewUrl || undefined}
-                target="_blank"
-                rel="noreferrer"
-                className="nb-border nb-press flex h-6 w-6 items-center justify-center rounded-md bg-[var(--nb-lime)] text-[var(--nb-ink)]"
-                title="Open live browser"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-            {isBrowserbase && onRefreshLiveView && (
-              <button
-                onClick={refresh}
-                disabled={isRefreshing}
-                className="nb-border nb-press flex h-6 w-6 items-center justify-center rounded-md bg-white text-[var(--nb-ink)] disabled:opacity-50"
-                title="Refresh live browser"
-              >
-                <RefreshCcw
-                  className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
-                />
-              </button>
-            )}
-          </div>
+      {/* Real-time visual: the agent's latest view + an auto-advancing strip. */}
+      <LiveFilmstrip isStreaming={isStreaming} />
 
-          <div className="relative aspect-[16/10] bg-zinc-100">
-            {showLiveBrowser ? (
-              <>
-                {!isFrameLoaded && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-[var(--nb-paper)] px-6 text-center">
-                    <span className="nb-border flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--nb-lime)]">
-                      <RefreshCcw className="h-4 w-4 animate-spin text-[var(--nb-ink)]" />
-                    </span>
-                    <p className="text-xs font-black uppercase tracking-wide text-[var(--nb-ink)]">
-                      Loading live Chrome
-                    </p>
-                  </div>
-                )}
-                <iframe
-                  key={liveViewUrl}
-                  src={liveViewUrl || undefined}
-                  title="Live Browserbase session"
-                  allow="clipboard-read; clipboard-write; fullscreen"
-                  onLoad={() => setIsFrameLoaded(true)}
-                  className="h-full w-full bg-white"
-                />
-              </>
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 bg-[var(--nb-paper)] px-6 text-center">
-                <span className="nb-border flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--nb-lime)]">
-                  <Radio className="h-5 w-5 text-[var(--nb-ink)]" />
-                </span>
-                <div>
-                  <p className="text-sm font-black uppercase tracking-wide text-[var(--nb-ink)]">
-                    {isBrowserbase ? "Connecting live view" : "Local Chrome mode"}
-                  </p>
-                  <p className="mt-1 max-w-xs text-xs font-medium leading-relaxed text-zinc-600">
-                    {isBrowserbase
-                      ? "The browser stream appears here as soon as Browserbase publishes it."
-                      : "Chrome opens as a real window on this machine. Production shows the cloud browser here."}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* The live action feed. */}
+      {/* The live evidence feed — screenshots + text captured per action. */}
       <div className="min-h-0 flex-1 nb-paper">
         <EvidenceTimeline />
       </div>

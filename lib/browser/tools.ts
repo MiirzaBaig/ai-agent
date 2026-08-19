@@ -32,8 +32,14 @@ async function screenshotB64(session: BrowserSession): Promise<string | undefine
   }
 }
 
-/** Text for the model + a fresh screenshot for the UI, after an action. */
-async function actionResult(session: BrowserSession): Promise<ActionResult> {
+// Capture a screenshot only on the visually meaningful actions (navigate,
+// click, type, explicit screenshot) — these feed the live filmstrip. The
+// cheap actions (read, goBack) skip the PNG encode to keep the loop fast.
+async function actionResult(
+  session: BrowserSession,
+  withShot = false,
+): Promise<ActionResult> {
+  if (!withShot) return { text: await pageText(session) };
   const [text, shot] = await Promise.all([
     pageText(session),
     screenshotB64(session),
@@ -67,7 +73,7 @@ export function browserTools(sandboxId?: string) {
       withSession(async (s) => {
         const target = /^https?:\/\//i.test(url) ? url : `https://${url}`;
         await s.page.goto(target, { waitUntil: "domcontentloaded" });
-        return actionResult(s);
+        return actionResult(s, true);
       }),
     toModelOutput: toModelText,
   });
@@ -94,7 +100,7 @@ export function browserTools(sandboxId?: string) {
         await s.page
           .waitForLoadState("domcontentloaded", { timeout: 8000 })
           .catch(() => {});
-        return actionResult(s);
+        return actionResult(s, true);
       }),
     toModelOutput: toModelText,
   });
@@ -130,7 +136,7 @@ export function browserTools(sandboxId?: string) {
             .waitForLoadState("domcontentloaded", { timeout: 8000 })
             .catch(() => {});
         }
-        return actionResult(s);
+        return actionResult(s, true);
       }),
     toModelOutput: toModelText,
   });

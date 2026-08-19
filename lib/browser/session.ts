@@ -36,7 +36,13 @@ const sessions = new Map<string, BrowserSession>();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function shouldUseBrowserbase() {
-  return Boolean(process.env.BROWSERBASE_API_KEY);
+  if (!process.env.BROWSERBASE_API_KEY) return false;
+  // Explicit override wins either way.
+  if (process.env.BROWSER_PROVIDER === "browserbase") return true;
+  if (process.env.BROWSER_PROVIDER === "local") return false;
+  // Otherwise: cloud only in production (Vercel). Locally we open a real Chrome
+  // window (fast, visible) even when Browserbase keys are present in .env.local.
+  return process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 }
 
 async function createBrowserbaseSession() {

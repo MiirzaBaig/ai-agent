@@ -1,5 +1,7 @@
 import { killBrowserSession } from "@/lib/browser/session";
 
+export const runtime = "nodejs";
+
 // Common handler for both GET and POST requests
 async function handleKillDesktop(request: Request) {
   // Enable CORS to ensure this works across all browsers

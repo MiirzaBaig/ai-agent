@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
@@ -35,12 +35,12 @@ export default function Chat() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showActivity, setShowActivity] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  // Mobile: which panel is on screen (no room for both side-by-side).
+  const [mobileTab, setMobileTab] = useState<"chat" | "evidence">("chat");
   const stoppingRef = useRef(false);
 
   // Browser session id. Browserbase sessions can also expose an embeddable live view.
   const [browserSessionId, setBrowserSessionId] = useState<string | null>(null);
-  const [browserLiveViewUrl, setBrowserLiveViewUrl] = useState<string | null>(null);
-  const [browserProvider, setBrowserProvider] = useState<string | null>(null);
 
   const {
     currentSessionId,
@@ -152,6 +152,14 @@ export default function Chat() {
     if (prevStatusRef.current !== "ready" && status === "ready") {
       stoppingRef.current = false;
     }
+    // On mobile, jump to the Evidence tab when a run starts so the live
+    // filmstrip is visible without an extra tap.
+    if (
+      prevStatusRef.current === "ready" &&
+      (status === "submitted" || status === "streaming")
+    ) {
+      setMobileTab("evidence");
+    }
     prevStatusRef.current = status;
   }, [status]);
 
@@ -190,14 +198,8 @@ export default function Chat() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to start browser");
       }
-      const { id, liveViewUrl, provider } = (await response.json()) as {
-        id: string;
-        liveViewUrl?: string;
-        provider?: string;
-      };
+      const { id } = (await response.json()) as { id: string };
       setBrowserSessionId(id);
-      setBrowserLiveViewUrl(liveViewUrl || null);
-      setBrowserProvider(provider || null);
       sandboxIdRef.current = id;
       if (currentSessionId) updateSessionSandboxId(currentSessionId, id);
       return id;
@@ -214,24 +216,6 @@ export default function Chat() {
       setIsInitializing(false);
     }
   };
-
-  const refreshLiveView = useCallback(async () => {
-    if (!browserSessionId) return;
-    try {
-      const response = await fetch("/api/browser-live-view", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sandboxId: browserSessionId }),
-      });
-      if (!response.ok) return;
-      const { liveViewUrl } = (await response.json()) as {
-        liveViewUrl?: string;
-      };
-      if (liveViewUrl) setBrowserLiveViewUrl(liveViewUrl);
-    } catch (err) {
-      console.error("Failed to refresh browser live view:", err);
-    }
-  }, [browserSessionId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -323,9 +307,6 @@ export default function Chat() {
                     isStreaming={
                       status === "streaming" || status === "submitted"
                     }
-                    liveViewUrl={browserLiveViewUrl}
-                    provider={browserProvider}
-                    onRefreshLiveView={refreshLiveView}
                   />
                 </ResizablePanel>
               </>
@@ -333,7 +314,7 @@ export default function Chat() {
           </ResizablePanelGroup>
         </div>
 
-        {/* Mobile View (Chat Only) */}
+        {/* Mobile View — Chat / Evidence tabs (no room for both at once) */}
         <div className="w-full h-full xl:hidden flex flex-col overflow-hidden">
           <div className="flex-shrink-0 nb-paper px-3 pt-3 pb-3 flex">
             <div className="nb-border nb-shadow rounded-xl bg-white py-1.5 pl-2.5 pr-1.5 flex flex-1 justify-between items-center">
@@ -348,23 +329,59 @@ export default function Chat() {
               </div>
             </div>
           </div>
-          <SessionList />
-          <V2Announcement />
-          {usage.runs > 0 && <SessionTelemetry usage={usage} cost={cost} />}
-          <div className="flex-1 min-h-0 flex flex-col">
-            <ChatPanel
-              messages={messages}
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={handleSubmit}
-              isLoading={isLoading}
-              status={status}
-              isInitializing={isInitializing}
-              stop={stop}
-              setInput={setInput}
-              onToolCallClick={setSelectedToolCallId}
-            />
+
+          {/* Segmented Chat / Evidence switch */}
+          <div className="flex-shrink-0 px-3 pb-2">
+            <div className="nb-border nb-shadow-sm flex rounded-xl bg-white p-1">
+              {(["chat", "evidence"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setMobileTab(tab)}
+                  className={cn(
+                    "flex-1 rounded-lg py-1.5 text-[11px] font-black uppercase tracking-wide transition-colors",
+                    mobileTab === tab
+                      ? "bg-[var(--nb-lime)] text-[var(--nb-ink)]"
+                      : "text-zinc-500",
+                  )}
+                >
+                  {tab === "chat" ? "Chat" : "Evidence"}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {mobileTab === "chat" ? (
+            <>
+              <SessionList />
+              <V2Announcement />
+              {usage.runs > 0 && (
+                <SessionTelemetry usage={usage} cost={cost} />
+              )}
+              <div className="flex-1 min-h-0 flex flex-col">
+                <ChatPanel
+                  messages={messages}
+                  input={input}
+                  handleInputChange={handleInputChange}
+                  handleSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  status={status}
+                  isInitializing={isInitializing}
+                  stop={stop}
+                  setInput={setInput}
+                  onToolCallClick={setSelectedToolCallId}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 min-h-0">
+              <ActivityPanel
+                isConnected={!!browserSessionId && !isInitializing}
+                isStreaming={
+                  status === "streaming" || status === "submitted"
+                }
+              />
+            </div>
+          )}
         </div>
 
         <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} />

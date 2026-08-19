@@ -13,6 +13,7 @@ import {
   Loader2,
   AlertCircle,
   Download,
+  ExternalLink,
 } from "lucide-react";
 import { useEventStore } from "@/lib/events/store";
 import { downloadReceipt } from "@/lib/receipt";
@@ -45,15 +46,45 @@ function StatusDot({ status }: { status: AgentEvent["status"] }) {
   return <ShieldCheck className="h-3 w-3 text-emerald-500" />;
 }
 
+// Turn a raw URL into a short, human label: "google.com › weather in dubai today".
+function prettyUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.replace(/^www\./, "");
+    const q = u.searchParams.get("q");
+    if (q) return `${host} › ${q}`;
+    const path = u.pathname.replace(/\/$/, "");
+    return path && path !== "" ? `${host}${path}` : host;
+  } catch {
+    return raw;
+  }
+}
+
+// Common site chrome (nav bars, cookie/accessibility boilerplate) that gets
+// scraped before the real content. We trim it so the card shows what matters.
+const TEXT_NOISE =
+  /^(skip to main content|accessibility|sign in|all news images videos|shopping more tools|search results|choose area|ai overview|ai mode)\b/i;
+
+function cleanText(text: string): string {
+  return text
+    .split(/\s{2,}|\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s && !TEXT_NOISE.test(s))
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 600);
+}
+
 // Render the pageContext detail ("URL: … / Title: … / Visible text: …") as a
-// clean block instead of a raw dark code dump.
+// clean, readable block instead of a raw page dump.
 function DetailView({ detail }: { detail: string }) {
   const urlMatch = detail.match(/URL:\s*(.+)/);
   const titleMatch = detail.match(/Title:\s*(.+)/);
   const textMatch = detail.match(/Visible text[^:]*:\s*([\s\S]*)/i);
   const url = urlMatch?.[1]?.trim();
   const title = titleMatch?.[1]?.trim();
-  const text = textMatch?.[1]?.trim();
+  const text = textMatch?.[1] ? cleanText(textMatch[1]) : "";
 
   // Not a pageContext string — just show it wrapped.
   if (!url && !title && !text) {
@@ -65,17 +96,24 @@ function DetailView({ detail }: { detail: string }) {
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {url && (
-        <div className="truncate rounded-lg nb-border bg-white px-2 py-1 font-mono text-[10px] text-zinc-600">
-          {url}
-        </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1.5 truncate text-[11px] font-bold text-[var(--nb-ink)] hover:underline"
+          title={url}
+        >
+          <ExternalLink className="h-3 w-3 flex-shrink-0 text-zinc-400" />
+          <span className="truncate">{prettyUrl(url)}</span>
+        </a>
       )}
-      {title && (
+      {title && !url?.includes(title) && (
         <div className="text-xs font-bold text-[var(--nb-ink)]">{title}</div>
       )}
       {text && (
-        <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-zinc-500">
+        <p className="max-h-32 overflow-auto break-words text-[11px] leading-relaxed text-zinc-500">
           {text}
         </p>
       )}

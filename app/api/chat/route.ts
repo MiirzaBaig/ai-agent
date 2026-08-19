@@ -10,7 +10,8 @@ import { browserTools } from "@/lib/browser/tools";
 import { prunedMessages } from "@/lib/utils";
 import { resolveModelId } from "@/lib/models";
 
-// Allow streaming responses up to 30 seconds
+// Node runtime (Playwright/CDP + child_process); allow long agent runs.
+export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const MAX_AGENT_STEPS = 30;

@@ -38,6 +38,29 @@ export async function buildReceiptHtml(opts: {
     events.map((e) => `${e.type}:${describeEvent(e)}:${e.timestamp}`).join("|"),
   );
 
+  // Contact-sheet of captured frames for the hero strip (mirrors the in-app
+  // filmstrip). Cap the thumbnail count so the file stays shareable.
+  const shots = events
+    .map((e) => ({ shot: screenshotOf(e), label: describeEvent(e) }))
+    .filter((s): s is { shot: string; label: string } => Boolean(s.shot));
+  const MAX_THUMBS = 12;
+  const thumbsPick =
+    shots.length <= MAX_THUMBS
+      ? shots
+      : shots.filter(
+          (_, i) => i % Math.ceil(shots.length / MAX_THUMBS) === 0,
+        );
+  const filmstrip = shots.length
+    ? `<div class="film">${thumbsPick
+        .map(
+          (s, i) =>
+            `<figure class="frame"><img src="data:image/png;base64,${s.shot}" alt="${esc(
+              s.label,
+            )}"/><figcaption>${i + 1}</figcaption></figure>`,
+        )
+        .join("")}</div>`
+    : "";
+
   const steps = events
     .map((e, i) => {
       const shot = screenshotOf(e);
@@ -85,10 +108,14 @@ export async function buildReceiptHtml(opts: {
   .num{font-size:11px;color:#a1a1aa;font-weight:800}
   .label{flex:1}
   .dur{font-size:11px;color:#a1a1aa;font-variant-numeric:tabular-nums}
-  .shot{display:block;width:100%;border-top:2px solid var(--ink)}
+  .shot{display:block;width:100%;max-height:420px;object-fit:cover;object-position:top;border-top:2px solid var(--ink)}
   .answer{white-space:pre-wrap}
   .foot{text-align:center;font-size:11px;color:#a1a1aa;margin-top:20px}
   code{background:#ececec;border-radius:4px;padding:1px 5px;font-size:12px;word-break:break-all}
+  .film{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+  .frame{margin:0;position:relative;flex:0 0 auto;width:120px}
+  .frame img{display:block;width:120px;height:76px;object-fit:cover;object-position:top;border:2.5px solid var(--ink);border-radius:8px;box-shadow:3px 3px 0 0 var(--ink)}
+  .frame figcaption{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.65);color:#fff;font-size:9px;font-weight:900;border-radius:4px;padding:1px 5px}
 </style></head>
 <body><div class="wrap">
   <div class="card">
@@ -101,6 +128,8 @@ export async function buildReceiptHtml(opts: {
       <span class="pill">${esc(when.toLocaleString())}</span>
     </div>
   </div>
+
+  ${filmstrip ? `<h2>Captured frames</h2><div class="card" style="padding:12px">${filmstrip}</div>` : ""}
 
   <h2>Task</h2>
   <div class="task">${esc(task)}</div>
