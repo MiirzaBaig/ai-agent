@@ -76,7 +76,7 @@ export const Input = ({
             value={input ?? ""}
             placeholder="Tell me what to do..."
             onChange={handleInputChange}
-            disabled={isLoading || isInitializing}
+            disabled={isLoading}
           />
         </motion.div>
       </motion.div>
@@ -106,7 +106,7 @@ export const Input = ({
       ) : (
         <motion.button
           type="submit"
-          disabled={isLoading || !input?.trim() || isInitializing}
+          disabled={isLoading || !input?.trim()}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-[var(--nb-lime)] nb-border nb-shadow-sm disabled:bg-zinc-200 disabled:shadow-none disabled:cursor-not-allowed touch-manipulation"
           animate={{
             scale: input?.trim() ? 1 : 0.96,

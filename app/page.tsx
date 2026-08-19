@@ -161,8 +161,17 @@ export default function Chat() {
 
   // v5 removed managed input + handleSubmit — bridge to the existing ChatPanel
   // props with local state and sendMessage.
+  const warmingRef = useRef(false);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
+    // Pre-warm Chrome the moment the user starts typing, so by the time they
+    // hit send the browser is ready and the message appears instantly.
+    if (e.target.value && !browserSessionId && !warmingRef.current) {
+      warmingRef.current = true;
+      ensureBrowser().finally(() => {
+        warmingRef.current = false;
+      });
+    }
   };
   // Lazily launch Chrome — only when the user actually sends a task, so a
   // hard-refresh doesn't pop open a browser window. Returns the session id.
@@ -200,12 +209,19 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (status !== "ready" || isInitializing) return;
+    if (status !== "ready") return;
     const text = input.trim();
     if (!text) return;
     stoppingRef.current = false;
     setInput("");
-    // Launch Chrome on the first task, then send.
+
+    // Fast path: Chrome already warming/ready (pre-warmed on typing) → send now
+    // so the message appears instantly.
+    if (browserSessionId) {
+      sendMessage({ text });
+      return;
+    }
+    // Cold path (e.g. paste + immediate send): make sure Chrome is up first.
     const id = await ensureBrowser();
     if (!id) return;
     sendMessage({ text });
