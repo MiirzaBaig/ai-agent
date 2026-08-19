@@ -81,29 +81,34 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full min-h-0 nb-paper nb-grid overflow-hidden">
-      {/* Messages Area */}
-      <div
-        className="flex-1 min-h-0 space-y-4 py-4 overflow-y-auto px-4"
-        ref={containerRef}
-        onScroll={handleScroll}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-      >
-        {messages.length === 0 ? <ProjectInfo /> : null}
-        {messages.map((message, i) => (
-          <PreviewMessage
-            message={message}
-            key={message.id}
-            isLoading={isLoading}
-            status={status}
-            isLatestMessage={i === messages.length - 1}
-            onToolCallClick={onToolCallClick}
+      {/* Messages Area (relative so the progressive blur overlays its base) */}
+      <div className="relative flex-1 min-h-0">
+        <div
+          className="h-full space-y-4 py-4 overflow-y-auto px-4"
+          ref={containerRef}
+          onScroll={handleScroll}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+        >
+          {messages.length === 0 ? <ProjectInfo /> : null}
+          {messages.map((message, i) => (
+            <PreviewMessage
+              message={message}
+              key={message.id}
+              isLoading={isLoading}
+              status={status}
+              isLatestMessage={i === messages.length - 1}
+              onToolCallClick={onToolCallClick}
+            />
+          ))}
+          <AgentActivity
+            active={status === "streaming" || status === "submitted"}
           />
-        ))}
-        <AgentActivity
-          active={status === "streaming" || status === "submitted"}
-        />
-        <div ref={endRef} className="pb-2" />
+          <div ref={endRef} className="pb-2" />
+        </div>
+
+        {/* Progressive blur — messages dissolve into the input area */}
+        <div className="progressive-blur pointer-events-none absolute inset-x-0 bottom-0 h-20 z-10" />
       </div>
 
       {/* Prompt Suggestions */}
