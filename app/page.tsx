@@ -142,41 +142,21 @@ export default function Chat() {
     }
   }, [messages, currentSessionId, saveMessages]);
 
-  // Clear input when agent finishes (status becomes "ready" after streaming)
+  // Reset the "stopping" guard once the agent settles. (Input is cleared on
+  // send in handleSubmit — we no longer wipe it on finish, which was stomping
+  // on text the user typed during the completion window.)
   const prevStatusRef = useRef(status);
   useEffect(() => {
-    // If status changed from streaming/submitted to ready, clear input
-    if (
-      prevStatusRef.current !== "ready" &&
-      (prevStatusRef.current === "streaming" || prevStatusRef.current === "submitted") &&
-      status === "ready"
-    ) {
+    if (prevStatusRef.current !== "ready" && status === "ready") {
       stoppingRef.current = false;
-      // Small delay to ensure user sees the completion, then clear
-      const timer = setTimeout(() => {
-        setInput("");
-        // Force blur input to ensure placeholder shows (especially on desktop)
-        const inputElement = document.querySelector('input[placeholder="Tell me what to do..."]') as HTMLInputElement;
-        if (inputElement) {
-          inputElement.blur();
-          // Re-focus after a moment to show placeholder
-          setTimeout(() => {
-            inputElement.focus();
-          }, 200);
-        }
-      }, 800);
-      return () => clearTimeout(timer);
     }
     prevStatusRef.current = status;
-  }, [status, setInput]);
+  }, [status]);
 
   const stop = () => {
-    // v5's stop() halts the stream and settles any in-flight tool part cleanly,
-    // so no manual result-injection is needed (unlike v4).
+    // v5's stop() halts the stream and settles any in-flight tool part cleanly.
     stoppingRef.current = true;
     stopGeneration();
-    setInput("");
-    setTimeout(() => setInput(""), 100);
   };
 
   // v5 removed managed input + handleSubmit — bridge to the existing ChatPanel
