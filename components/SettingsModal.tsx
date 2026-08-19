@@ -91,12 +91,13 @@ export function SettingsModal({
             {/* Chrome */}
             <Section icon={<Chrome className="h-4 w-4" />} title="Browser">
               <p className="text-xs leading-relaxed text-zinc-600">
-                Sentry drives a dedicated Google Chrome on this machine. If Chrome
-                isn&apos;t found automatically, set the{" "}
+                In production, Sentry runs on a Browserbase cloud browser. Local
+                development uses a dedicated Chrome on this machine; if Chrome
+                isn&apos;t found, set{" "}
                 <code className="rounded bg-zinc-200 px-1 font-mono text-[11px]">
                   CHROME_PATH
                 </code>{" "}
-                environment variable to its executable and restart the app.
+                to its executable and restart the app.
               </p>
             </Section>
 
