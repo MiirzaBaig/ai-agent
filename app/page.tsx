@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
@@ -215,6 +215,24 @@ export default function Chat() {
     }
   };
 
+  const refreshLiveView = useCallback(async () => {
+    if (!browserSessionId) return;
+    try {
+      const response = await fetch("/api/browser-live-view", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sandboxId: browserSessionId }),
+      });
+      if (!response.ok) return;
+      const { liveViewUrl } = (await response.json()) as {
+        liveViewUrl?: string;
+      };
+      if (liveViewUrl) setBrowserLiveViewUrl(liveViewUrl);
+    } catch (err) {
+      console.error("Failed to refresh browser live view:", err);
+    }
+  }, [browserSessionId]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (status !== "ready") return;
@@ -307,6 +325,7 @@ export default function Chat() {
                     }
                     liveViewUrl={browserLiveViewUrl}
                     provider={browserProvider}
+                    onRefreshLiveView={refreshLiveView}
                   />
                 </ResizablePanel>
               </>

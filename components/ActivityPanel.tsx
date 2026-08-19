@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Activity, Chrome, ExternalLink, Film, Radio } from "lucide-react";
+import {
+  Activity,
+  Chrome,
+  ExternalLink,
+  Film,
+  Radio,
+  RefreshCcw,
+} from "lucide-react";
 import { EvidenceTimeline } from "@/components/EvidenceTimeline";
 import { ReplayScrubber } from "@/components/ReplayScrubber";
 import { useEventStore } from "@/lib/events/store";
@@ -16,14 +23,18 @@ export function ActivityPanel({
   isStreaming,
   liveViewUrl,
   provider,
+  onRefreshLiveView,
 }: {
   isConnected: boolean;
   isStreaming?: boolean;
   liveViewUrl?: string | null;
   provider?: string | null;
+  onRefreshLiveView?: () => Promise<void> | void;
 }) {
   const { events } = useEventStore();
   const [showReplay, setShowReplay] = useState(false);
+  const [isFrameLoaded, setIsFrameLoaded] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Live elapsed timer while the agent is working.
   const [elapsed, setElapsed] = useState(0);
@@ -36,6 +47,28 @@ export function ActivityPanel({
 
   const isBrowserbase = provider === "browserbase";
   const showLiveBrowser = Boolean(liveViewUrl);
+
+  useEffect(() => {
+    setIsFrameLoaded(false);
+  }, [liveViewUrl]);
+
+  useEffect(() => {
+    if (!isBrowserbase || liveViewUrl || !onRefreshLiveView) return;
+    const t = setTimeout(() => {
+      void onRefreshLiveView();
+    }, 900);
+    return () => clearTimeout(t);
+  }, [isBrowserbase, liveViewUrl, onRefreshLiveView]);
+
+  const refresh = async () => {
+    if (!onRefreshLiveView) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshLiveView();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="relative flex h-full flex-col bg-zinc-950">
@@ -115,17 +148,42 @@ export function ActivityPanel({
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             )}
+            {isBrowserbase && onRefreshLiveView && (
+              <button
+                onClick={refresh}
+                disabled={isRefreshing}
+                className="nb-border nb-press flex h-6 w-6 items-center justify-center rounded-md bg-white text-[var(--nb-ink)] disabled:opacity-50"
+                title="Refresh live browser"
+              >
+                <RefreshCcw
+                  className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+              </button>
+            )}
           </div>
 
           <div className="relative aspect-[16/10] bg-zinc-100">
             {showLiveBrowser ? (
-              <iframe
-                src={liveViewUrl || undefined}
-                title="Live Browserbase session"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
-                allow="clipboard-read; clipboard-write; fullscreen"
-                className="h-full w-full bg-white"
-              />
+              <>
+                {!isFrameLoaded && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-[var(--nb-paper)] px-6 text-center">
+                    <span className="nb-border flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--nb-lime)]">
+                      <RefreshCcw className="h-4 w-4 animate-spin text-[var(--nb-ink)]" />
+                    </span>
+                    <p className="text-xs font-black uppercase tracking-wide text-[var(--nb-ink)]">
+                      Loading live Chrome
+                    </p>
+                  </div>
+                )}
+                <iframe
+                  key={liveViewUrl}
+                  src={liveViewUrl || undefined}
+                  title="Live Browserbase session"
+                  allow="clipboard-read; clipboard-write; fullscreen"
+                  onLoad={() => setIsFrameLoaded(true)}
+                  className="h-full w-full bg-white"
+                />
+              </>
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-3 bg-[var(--nb-paper)] px-6 text-center">
                 <span className="nb-border flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--nb-lime)]">
