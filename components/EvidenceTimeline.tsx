@@ -45,6 +45,44 @@ function StatusDot({ status }: { status: AgentEvent["status"] }) {
   return <ShieldCheck className="h-3 w-3 text-emerald-500" />;
 }
 
+// Render the pageContext detail ("URL: … / Title: … / Visible text: …") as a
+// clean block instead of a raw dark code dump.
+function DetailView({ detail }: { detail: string }) {
+  const urlMatch = detail.match(/URL:\s*(.+)/);
+  const titleMatch = detail.match(/Title:\s*(.+)/);
+  const textMatch = detail.match(/Visible text[^:]*:\s*([\s\S]*)/i);
+  const url = urlMatch?.[1]?.trim();
+  const title = titleMatch?.[1]?.trim();
+  const text = textMatch?.[1]?.trim();
+
+  // Not a pageContext string — just show it wrapped.
+  if (!url && !title && !text) {
+    return (
+      <p className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-zinc-100 p-2 text-[11px] leading-relaxed text-zinc-700">
+        {detail}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {url && (
+        <div className="truncate rounded-lg nb-border bg-white px-2 py-1 font-mono text-[10px] text-zinc-600">
+          {url}
+        </div>
+      )}
+      {title && (
+        <div className="text-xs font-bold text-[var(--nb-ink)]">{title}</div>
+      )}
+      {text && (
+        <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-zinc-500">
+          {text}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function TimelineRow({ event }: { event: AgentEvent }) {
   const [expanded, setExpanded] = useState(false);
   const [faviconOk, setFaviconOk] = useState(true);
@@ -123,20 +161,16 @@ function TimelineRow({ event }: { event: AgentEvent }) {
               transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
               className="overflow-hidden"
             >
-              <div className="border-t border-zinc-100 p-2">
+              <div className="space-y-2 border-t-2 border-zinc-200 p-2.5">
                 {shot && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`data:image/png;base64,${shot}`}
                     alt="Screen capture evidence"
-                    className="w-full rounded-md border border-zinc-200"
+                    className="w-full rounded-lg border-2 border-[var(--nb-ink)]"
                   />
                 )}
-                {detail && (
-                  <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-zinc-950 p-2.5 text-[11px] leading-relaxed text-zinc-100">
-                    {detail}
-                  </pre>
-                )}
+                {detail && <DetailView detail={detail} />}
               </div>
             </motion.div>
           )}
@@ -200,10 +234,10 @@ export function EvidenceTimeline() {
       </div>
 
       {/* The trail */}
-      <div className="relative flex-1 overflow-y-auto nb-paper px-4 py-4">
-        {/* Vertical spine */}
-        <span className="absolute bottom-4 left-[17px] top-4 w-[2px] bg-[var(--nb-ink)]" />
-        <div className="space-y-2">
+      <div className="flex-1 overflow-y-auto nb-paper px-4 py-4">
+        <div className="relative space-y-2">
+          {/* Vertical spine — inside the content so it spans all rows */}
+          <span className="pointer-events-none absolute bottom-2 left-[15px] top-2 w-[2px] bg-[var(--nb-ink)]" />
           {events.map((event) => (
             <TimelineRow key={event.id} event={event} />
           ))}
