@@ -147,7 +147,7 @@ const PurePreviewMessage = ({
                           "flex flex-col gap-4 text-[15px] leading-relaxed",
                           message.role === "user"
                             ? "nb-border nb-shadow-sm bg-white text-[var(--nb-ink)] px-3.5 py-2.5 rounded-xl rounded-tr-sm font-medium"
-                            : "text-zinc-800 pt-0.5",
+                            : "sentry-prose text-zinc-800 pt-0.5",
                         )}
                       >
                         <Streamdown>{part.text}</Streamdown>

@@ -20,6 +20,7 @@ import {
   detailOf,
   screenshotOf,
   categoryOf,
+  faviconOf,
   type EventCategory,
 } from "@/lib/events/describe";
 import { cn } from "@/lib/utils";
@@ -44,16 +45,28 @@ function StatusDot({ status }: { status: AgentEvent["status"] }) {
 
 function TimelineRow({ event }: { event: AgentEvent }) {
   const [expanded, setExpanded] = useState(false);
+  const [faviconOk, setFaviconOk] = useState(true);
   const Icon = CATEGORY_ICON[categoryOf(event)];
   const shot = screenshotOf(event);
   const detail = detailOf(event);
   const hasEvidence = Boolean(shot || detail);
+  const favicon = faviconOf(event);
 
   return (
     <div className="relative pl-8">
-      {/* Spine node */}
-      <span className="nb-border absolute left-[6px] top-1 flex h-5 w-5 items-center justify-center rounded-md bg-[var(--nb-paper)]">
-        <Icon className="h-3 w-3 text-[var(--nb-ink)]" />
+      {/* Spine node — favicon for navigations, category icon otherwise */}
+      <span className="nb-border absolute left-[6px] top-1 flex h-5 w-5 items-center justify-center overflow-hidden rounded-md bg-[var(--nb-paper)]">
+        {favicon && faviconOk ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={favicon}
+            alt=""
+            className="h-3.5 w-3.5"
+            onError={() => setFaviconOk(false)}
+          />
+        ) : (
+          <Icon className="h-3 w-3 text-[var(--nb-ink)]" />
+        )}
       </span>
 
       <div

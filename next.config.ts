@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
               "frame-src https://va.vercel-scripts.com",
               "frame-ancestors 'self'",
               "connect-src 'self'",
-              "img-src 'self' data:",
+              "img-src 'self' data: https://www.google.com https://*.gstatic.com",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline'",
             ].join("; "),

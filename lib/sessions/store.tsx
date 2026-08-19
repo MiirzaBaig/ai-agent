@@ -10,6 +10,7 @@ type SessionStoreContextType = {
   createSession: () => string;
   switchSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
+  renameSession: (sessionId: string, name: string) => void;
   updateSessionSandboxId: (sessionId: string, sandboxId: string | null) => void;
   loadSessions: () => void;
   saveSessions: () => void;
@@ -135,6 +136,16 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
     []
   );
 
+  const renameSession = useCallback((sessionId: string, name: string) => {
+    setSessions((prev) => {
+      const next = prev.map((s) =>
+        s.id === sessionId ? { ...s, name: name.trim() || s.name } : s,
+      );
+      localStorage.setItem("ai-sessions", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const loadMessages = useCallback((sessionId: string): UIMessage[] => {
     try {
       const data = localStorage.getItem(`ai-messages-${sessionId}`);
@@ -195,6 +206,7 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
         createSession,
         switchSession,
         deleteSession,
+        renameSession,
         updateSessionSandboxId,
         loadSessions,
         saveSessions,

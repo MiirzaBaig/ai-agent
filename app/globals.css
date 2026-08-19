@@ -146,6 +146,103 @@
   }
 }
 
+/* Polished markdown for assistant answers (brutalist-flavored). */
+.sentry-prose {
+  font-size: 15px;
+  line-height: 1.65;
+}
+.sentry-prose p {
+  margin: 0.5rem 0;
+}
+.sentry-prose strong {
+  font-weight: 800;
+  color: #111;
+}
+.sentry-prose h1,
+.sentry-prose h2,
+.sentry-prose h3 {
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: #111;
+  margin: 1rem 0 0.4rem;
+  line-height: 1.25;
+}
+.sentry-prose h1 {
+  font-size: 1.2rem;
+}
+.sentry-prose h2 {
+  font-size: 1.05rem;
+}
+.sentry-prose h3 {
+  font-size: 0.95rem;
+}
+.sentry-prose a {
+  font-weight: 700;
+  color: #111;
+  text-decoration: none;
+  border-bottom: 2px solid #c2f542;
+  transition: background-color 0.15s ease;
+}
+.sentry-prose a:hover {
+  background-color: #c2f542;
+}
+.sentry-prose ul,
+.sentry-prose ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+.sentry-prose ul {
+  list-style: none;
+}
+.sentry-prose ul > li {
+  position: relative;
+  margin: 0.35rem 0;
+  padding-left: 0.25rem;
+}
+.sentry-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: -0.9rem;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border: 1.5px solid #111;
+  border-radius: 2px;
+  background: #c2f542;
+}
+.sentry-prose ol {
+  list-style: decimal;
+}
+.sentry-prose ol > li {
+  margin: 0.35rem 0;
+}
+.sentry-prose code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85em;
+  background: #ececec;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+.sentry-prose pre {
+  background: #111;
+  color: #f5f3eb;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+  font-size: 0.85em;
+}
+.sentry-prose pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+.sentry-prose blockquote {
+  border-left: 3px solid #c2f542;
+  padding-left: 0.75rem;
+  color: #52525b;
+  margin: 0.5rem 0;
+}
+
 /* Ensure placeholder is always visible */
 input::placeholder {
   opacity: 1 !important;

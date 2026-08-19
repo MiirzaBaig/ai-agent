@@ -7,7 +7,6 @@ import { Input } from "@/components/input";
 import { PromptSuggestions } from "@/components/prompt-suggestions";
 import { ProjectInfo } from "@/components/project-info";
 import { AgentActivity } from "@/components/AgentActivity";
-import { DebugPanel } from "@/components/DebugPanel";
 import { useScrollToBottom } from "@/lib/use-scroll-to-bottom";
 import { useScrollState } from "@/lib/scroll-state";
 
@@ -138,9 +137,6 @@ export function ChatPanel({
           />
         </form>
       </div>
-
-      {/* Debug Panel */}
-      <DebugPanel />
     </div>
   );
 }

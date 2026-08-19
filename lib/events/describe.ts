@@ -74,13 +74,13 @@ export function describeEvent(event: AgentEvent): string {
       const { action, summary } = event.payload;
       switch (action) {
         case "navigate":
-          return `Opened ${truncate(summary, 56)}`;
+          return `Opened ${domainOf(summary) ?? truncate(summary, 40)}`;
         case "click":
-          return `Clicked “${truncate(summary, 48)}”`;
+          return `Clicked “${truncate(summary, 40)}”`;
         case "type":
-          return `Typed ${truncate(summary, 48)}`;
+          return `Typed ${truncate(summary, 40)}`;
         case "read":
-          return `Read ${truncate(summary, 48)}`;
+          return `Read the page`;
         case "screenshot":
           return "Captured page";
         case "goBack":
@@ -88,6 +88,25 @@ export function describeEvent(event: AgentEvent): string {
       }
     }
   }
+}
+
+/** Clean domain label from a URL (e.g. "bing.com"). */
+export function domainOf(url: string): string | undefined {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return undefined;
+  }
+}
+
+/** A favicon URL for a browser navigate event, if we can derive a domain. */
+export function faviconOf(event: AgentEvent): string | undefined {
+  if (event.type !== "browser" || event.payload.action !== "navigate") {
+    return undefined;
+  }
+  const domain = domainOf(event.payload.summary);
+  if (!domain) return undefined;
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 }
 
 /** Optional secondary detail (bash output, page text, etc.) under the label. */

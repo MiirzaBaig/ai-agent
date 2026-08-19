@@ -6,6 +6,8 @@ import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ActivityPanel } from "@/components/ActivityPanel";
+import { Sidebar } from "@/components/Sidebar";
+import { SettingsModal } from "@/components/SettingsModal";
 import { SessionList } from "@/components/SessionList";
 import { useSessionStore } from "@/lib/sessions/store";
 import { useEventStore } from "@/lib/events/store";
@@ -27,6 +29,8 @@ import { useUsage } from "@/lib/use-usage";
 export default function Chat() {
   const [selectedToolCallId, setSelectedToolCallId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const stoppingRef = useRef(false);
 
   // Local browser session id (Chrome runs on the user's machine — no VNC).
@@ -232,25 +236,27 @@ export default function Chat() {
     <ScrollProvider>
       <div className="flex h-dvh relative">
         {/* Desktop View */}
-        <div className="w-full hidden xl:block">
-          <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* Chat Panel (Left) */}
+        <div className="w-full hidden xl:flex">
+          {/* Left history sidebar */}
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed((v) => !v)}
+            onOpenSettings={() => setShowSettings(true)}
+          />
+          <ResizablePanelGroup direction="horizontal" className="h-full flex-1">
+            {/* Chat Panel (Center) */}
             <ResizablePanel defaultSize={50} minSize={30} className="flex flex-col">
-              {/* Floating brutalist nav pill */}
+              {/* Slim top bar: model selector (name lives in the sidebar now) */}
               <div className="nb-paper px-4 pt-4 pb-3">
-                <div className="nb-border nb-shadow rounded-xl bg-white py-2 pl-3 pr-2 flex justify-between items-center">
-                  <SentryLogo />
-                  <div className="flex items-center gap-1.5">
-                    <ModelSelector
-                      modelId={modelId}
-                      onChange={setModelId}
-                      disabled={isLoading}
-                    />
-                    <DeployButton />
-                  </div>
+                <div className="nb-border nb-shadow rounded-xl bg-white py-2 pl-3 pr-2 flex justify-end items-center gap-1.5">
+                  <ModelSelector
+                    modelId={modelId}
+                    onChange={setModelId}
+                    disabled={isLoading}
+                  />
+                  <DeployButton />
                 </div>
               </div>
-              <SessionList />
               <V2Announcement />
               {usage.runs > 0 && (
                 <SessionTelemetry usage={usage} cost={cost} />
@@ -315,6 +321,7 @@ export default function Chat() {
           </div>
         </div>
 
+        <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} />
       </div>
     </ScrollProvider>
   );
