@@ -24,6 +24,7 @@ export type BrowserSession = {
   sessionId: string;
   /** Remote provider session id, when using a cloud browser. */
   providerSessionId?: string;
+  liveViewUrl?: string;
   provider?: "browserbase" | "local";
   /** The Chrome process we spawned, if any (so we can close only ours). */
   proc?: ChildProcess;
@@ -82,6 +83,41 @@ async function createBrowserbaseSession() {
   return { id: data.id, connectUrl: data.connectUrl };
 }
 
+function withoutNavbar(url: string) {
+  const parsed = new URL(url);
+  parsed.searchParams.set("navbar", "false");
+  return parsed.toString();
+}
+
+async function getBrowserbaseLiveViewUrl(sessionId: string) {
+  const apiKey = process.env.BROWSERBASE_API_KEY;
+  if (!apiKey) return undefined;
+
+  const res = await fetch(`${BROWSERBASE_API_URL}/${sessionId}/debug`, {
+    headers: {
+      "X-BB-API-Key": apiKey,
+    },
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    debuggerFullscreenUrl?: string;
+    debuggerUrl?: string;
+    pages?: Array<{
+      debuggerFullscreenUrl?: string;
+      debuggerUrl?: string;
+    }>;
+  };
+
+  if (!res.ok) return undefined;
+
+  const pageUrl =
+    data.pages?.[0]?.debuggerFullscreenUrl ||
+    data.debuggerFullscreenUrl ||
+    data.pages?.[0]?.debuggerUrl ||
+    data.debuggerUrl;
+
+  return pageUrl ? withoutNavbar(pageUrl) : undefined;
+}
+
 async function connectBrowserbase(sessionId: string): Promise<BrowserSession> {
   const remote = await createBrowserbaseSession();
   const browser = await chromium.connectOverCDP(remote.connectUrl, {
@@ -99,6 +135,7 @@ async function connectBrowserbase(sessionId: string): Promise<BrowserSession> {
     sessionId,
     provider: "browserbase",
     providerSessionId: remote.id,
+    liveViewUrl: await getBrowserbaseLiveViewUrl(remote.id),
   };
 }
 
@@ -200,13 +237,14 @@ export async function getBrowserSession(id?: string): Promise<BrowserSession> {
   return session;
 }
 
-/** Provision the session and return its id (no VNC stream in the local build). */
+/** Provision the session and return its id plus a live viewer URL when remote. */
 export async function getBrowserSessionInfo(id?: string) {
   const session = await getBrowserSession(id);
   return {
     id: session.sessionId,
     provider: session.provider,
     providerSessionId: session.providerSessionId,
+    liveViewUrl: session.liveViewUrl,
   };
 }
 

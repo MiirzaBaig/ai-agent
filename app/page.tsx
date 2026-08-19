@@ -37,8 +37,10 @@ export default function Chat() {
   const [showSettings, setShowSettings] = useState(false);
   const stoppingRef = useRef(false);
 
-  // Local browser session id (Chrome runs on the user's machine — no VNC).
+  // Browser session id. Browserbase sessions can also expose an embeddable live view.
   const [browserSessionId, setBrowserSessionId] = useState<string | null>(null);
+  const [browserLiveViewUrl, setBrowserLiveViewUrl] = useState<string | null>(null);
+  const [browserProvider, setBrowserProvider] = useState<string | null>(null);
 
   const {
     currentSessionId,
@@ -188,8 +190,14 @@ export default function Chat() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to start browser");
       }
-      const { id } = await response.json();
+      const { id, liveViewUrl, provider } = (await response.json()) as {
+        id: string;
+        liveViewUrl?: string;
+        provider?: string;
+      };
       setBrowserSessionId(id);
+      setBrowserLiveViewUrl(liveViewUrl || null);
+      setBrowserProvider(provider || null);
       sandboxIdRef.current = id;
       if (currentSessionId) updateSessionSandboxId(currentSessionId, id);
       return id;
@@ -297,6 +305,8 @@ export default function Chat() {
                     isStreaming={
                       status === "streaming" || status === "submitted"
                     }
+                    liveViewUrl={browserLiveViewUrl}
+                    provider={browserProvider}
                   />
                 </ResizablePanel>
               </>

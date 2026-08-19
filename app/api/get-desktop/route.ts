@@ -3,8 +3,8 @@ import { getBrowserSessionInfo } from "@/lib/browser/session";
 export async function POST(request: Request) {
   try {
     const { sandboxId } = await request.json();
-    // Launch/connect the dedicated local Chrome and return its session id.
-    // (No VNC stream in the local build — the real browser is on screen.)
+    // Launch/connect the browser and return its session id plus live view URL
+    // when the session is hosted remotely.
     const result = await getBrowserSessionInfo(sandboxId || undefined);
     return Response.json(result);
   } catch (error) {

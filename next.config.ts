@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "frame-src https://va.vercel-scripts.com",
+              "frame-src 'self' https://va.vercel-scripts.com https://browserbase.com https://www.browserbase.com https://*.browserbase.com",
               "frame-ancestors 'self'",
               "connect-src 'self'",
               "img-src 'self' data: https://www.google.com https://*.gstatic.com",
