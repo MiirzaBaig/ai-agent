@@ -25,11 +25,15 @@ import { SessionTelemetry } from "@/components/SessionTelemetry";
 import { V2Announcement } from "@/components/V2Announcement";
 import { useModel } from "@/lib/use-model";
 import { useUsage } from "@/lib/use-usage";
+import { PanelRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Chat() {
-  const [selectedToolCallId, setSelectedToolCallId] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [, setSelectedToolCallId] = useState<string | null>(null);
+  // Chrome launches lazily on the first task, so nothing is "initializing" at rest.
+  const [isInitializing, setIsInitializing] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showActivity, setShowActivity] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const stoppingRef = useRef(false);
 
@@ -180,57 +184,54 @@ export default function Chat() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Lazily launch Chrome — only when the user actually sends a task, so a
+  // hard-refresh doesn't pop open a browser window. Returns the session id.
+  const ensureBrowser = async (): Promise<string | null> => {
+    if (browserSessionId) return browserSessionId;
+    try {
+      setIsInitializing(true);
+      const response = await fetch("/api/get-desktop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sandboxId: null }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to start browser");
+      }
+      const { id } = await response.json();
+      setBrowserSessionId(id);
+      sandboxIdRef.current = id;
+      if (currentSessionId) updateSessionSandboxId(currentSessionId, id);
+      return id;
+    } catch (err) {
+      console.error("Failed to start browser session:", err);
+      toast.error("Couldn't start Chrome", {
+        description:
+          err instanceof Error
+            ? err.message
+            : "Make sure Google Chrome is installed.",
+      });
+      return null;
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (status !== "ready" || isInitializing) return;
     const text = input.trim();
     if (!text) return;
     stoppingRef.current = false;
-    sendMessage({ text });
     setInput("");
+    // Launch Chrome on the first task, then send.
+    const id = await ensureBrowser();
+    if (!id) return;
+    sendMessage({ text });
   };
 
   const isLoading = status !== "ready";
-
-  // Connect the local Chrome browser session once on mount. Unlike the cloud
-  // build there's a single persistent browser — no per-session ephemeral VMs,
-  // and we never kill the user's Chrome on tab close.
-  useEffect(() => {
-    let cancelled = false;
-    const connect = async () => {
-      try {
-        setIsInitializing(true);
-        const response = await fetch("/api/get-desktop", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sandboxId: null }),
-        });
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Failed to start browser");
-        }
-        const { id } = await response.json();
-        if (cancelled) return;
-        setBrowserSessionId(id);
-        if (currentSessionId) updateSessionSandboxId(currentSessionId, id);
-      } catch (err) {
-        console.error("Failed to start browser session:", err);
-        toast.error("Couldn't start Chrome", {
-          description:
-            err instanceof Error
-              ? err.message
-              : "Make sure Google Chrome is installed.",
-        });
-      } finally {
-        if (!cancelled) setIsInitializing(false);
-      }
-    };
-    connect();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <ScrollProvider>
@@ -253,6 +254,19 @@ export default function Chat() {
                   onChange={setModelId}
                   disabled={isLoading}
                 />
+                <button
+                  onClick={() => setShowActivity((v) => !v)}
+                  className={cn(
+                    "flex h-8 items-center gap-1.5 rounded-lg nb-border nb-shadow-sm nb-press px-2.5 text-[11px] font-black uppercase tracking-wide",
+                    showActivity
+                      ? "bg-[var(--nb-lime)] text-[var(--nb-ink)]"
+                      : "bg-white text-[var(--nb-ink)]",
+                  )}
+                  title={showActivity ? "Hide activity" : "Show activity"}
+                >
+                  <PanelRight className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Activity</span>
+                </button>
                 <DeployButton />
               </div>
               <V2Announcement />
@@ -273,15 +287,24 @@ export default function Chat() {
               />
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
-
-            {/* Live Activity Panel (Right) — the real Chrome is on your screen */}
-            <ResizablePanel defaultSize={50} minSize={30} className="bg-zinc-950">
-              <ActivityPanel
-                isConnected={!!browserSessionId && !isInitializing}
-                isStreaming={status === "streaming" || status === "submitted"}
-              />
-            </ResizablePanel>
+            {showActivity && (
+              <>
+                <ResizableHandle withHandle />
+                {/* Live Activity Panel (Right) — collapsible */}
+                <ResizablePanel
+                  defaultSize={42}
+                  minSize={28}
+                  className="bg-zinc-950"
+                >
+                  <ActivityPanel
+                    isConnected={!!browserSessionId && !isInitializing}
+                    isStreaming={
+                      status === "streaming" || status === "submitted"
+                    }
+                  />
+                </ResizablePanel>
+              </>
+            )}
           </ResizablePanelGroup>
         </div>
 
