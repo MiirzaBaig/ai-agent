@@ -1,6 +1,5 @@
 import { ArrowUp, Square } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
 
 interface InputProps {
   input: string;
@@ -19,23 +18,6 @@ export const Input = ({
   status,
   stop,
 }: InputProps) => {
-  const [isHighlighted, setIsHighlighted] = useState(false);
-  const prevInputRef = useRef(input);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Detect when input changes from external source (suggestion selection)
-  useEffect(() => {
-    if (input !== prevInputRef.current && input.trim() && !prevInputRef.current.trim()) {
-      setIsHighlighted(true);
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 100);
-      setTimeout(() => setIsHighlighted(false), 1500);
-    }
-    prevInputRef.current = input;
-  }, [input]);
-
   return (
     <motion.div
       className="relative w-full"
@@ -45,24 +27,14 @@ export const Input = ({
     >
       <motion.div
         className="relative"
-        animate={{
-          scale: isHighlighted ? [1, 1.02, 1] : 1,
-        }}
+        animate={{ scale: 1 }}
         transition={{
           duration: 0.5,
           ease: [0.4, 0, 0.2, 1],
         }}
       >
         <motion.div
-          animate={{
-            boxShadow: isHighlighted
-              ? [
-                  "0 0 0 0 rgba(59, 130, 246, 0)",
-                  "0 0 0 4px rgba(59, 130, 246, 0.2)",
-                  "0 0 0 0 rgba(59, 130, 246, 0)",
-                ]
-              : "0 0 0 0 rgba(59, 130, 246, 0)",
-          }}
+          animate={{ boxShadow: "0 0 0 0 rgba(59, 130, 246, 0)" }}
           transition={{
             duration: 0.5,
             ease: "easeOut",
@@ -70,13 +42,12 @@ export const Input = ({
           className="rounded-2xl"
         >
           <input
-            ref={inputRef}
             type="text"
             className="w-full h-13 sm:h-14 px-4 pr-16 text-base sm:text-sm font-semibold bg-white text-[var(--nb-ink)] rounded-xl nb-border nb-shadow focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 transition-transform duration-100 placeholder:font-medium placeholder:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed"
             value={input ?? ""}
             placeholder="Tell me what to do..."
             onChange={handleInputChange}
-            disabled={isLoading}
+            disabled={isLoading || isInitializing}
           />
         </motion.div>
       </motion.div>
@@ -106,7 +77,7 @@ export const Input = ({
       ) : (
         <motion.button
           type="submit"
-          disabled={isLoading || !input?.trim()}
+          disabled={isLoading || !input?.trim() || isInitializing}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center bg-[var(--nb-lime)] nb-border nb-shadow-sm disabled:bg-zinc-200 disabled:shadow-none disabled:cursor-not-allowed touch-manipulation"
           animate={{
             scale: input?.trim() ? 1 : 0.96,
