@@ -1,4 +1,4 @@
-import { killDesktop } from "@/lib/e2b/utils";
+import { killBrowserSession } from "@/lib/browser/session";
 
 // Common handler for both GET and POST requests
 async function handleKillDesktop(request: Request) {
@@ -14,7 +14,7 @@ async function handleKillDesktop(request: Request) {
   }
 
   try {
-    await killDesktop(sandboxId);
+    await killBrowserSession(sandboxId);
     return new Response("Desktop killed successfully", { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

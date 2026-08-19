@@ -73,6 +73,29 @@ export type BashEvent = BaseEvent & {
   };
 };
 
+// Browser-agent action (navigate / click / type / read / screenshot / goBack).
+export type BrowserAction =
+  | "navigate"
+  | "click"
+  | "type"
+  | "read"
+  | "screenshot"
+  | "goBack";
+
+export type BrowserEvent = BaseEvent & {
+  type: "browser";
+  payload: {
+    toolCallId: string;
+    action: BrowserAction;
+    /** Short human-readable summary of the action (e.g. the URL or clicked text). */
+    summary: string;
+    /** Screenshot (base64 PNG, no data: prefix) for screenshot actions. */
+    imageData?: string;
+    /** Extracted / result text for read/navigate actions. */
+    output?: string;
+  };
+};
+
 export type AgentEvent =
   | ScreenshotEvent
   | ClickEvent
@@ -81,7 +104,8 @@ export type AgentEvent =
   | KeyEvent
   | ScrollEvent
   | WaitEvent
-  | BashEvent;
+  | BashEvent
+  | BrowserEvent;
 
 export type EventCounts = Record<string, number>;
 

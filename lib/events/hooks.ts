@@ -42,6 +42,37 @@ function mapToolCallToEventType(
   return null;
 }
 
+const BROWSER_ACTIONS = new Set([
+  "navigate",
+  "click",
+  "type",
+  "read",
+  "screenshot",
+  "goBack",
+]);
+
+function summarizeBrowser(
+  action: string,
+  args: Record<string, unknown>,
+): string {
+  switch (action) {
+    case "navigate":
+      return String(args.url ?? "");
+    case "click":
+      return String(args.text ?? args.selector ?? "element");
+    case "type":
+      return `“${String(args.text ?? "")}”${args.submit ? " ⏎" : ""}`;
+    case "read":
+      return args.selector ? String(args.selector) : "page text";
+    case "screenshot":
+      return "current page";
+    case "goBack":
+      return "previous page";
+    default:
+      return action;
+  }
+}
+
 function createEventFromToolCall(
   toolCallId: string,
   toolName: string,
@@ -50,9 +81,6 @@ function createEventFromToolCall(
   sessionId: string,
   result?: unknown
 ): AgentEvent | null {
-  const eventType = mapToolCallToEventType(toolName, args);
-  if (!eventType) return null;
-
   const timestamp = Date.now();
   const wasBlocked =
     typeof result === "string" && result.startsWith("⛔ Blocked");
@@ -69,6 +97,28 @@ function createEventFromToolCall(
     status,
     sessionId,
   };
+
+  // Browser agent tools → a single browser event with a human summary.
+  if (BROWSER_ACTIONS.has(toolName)) {
+    const imageData =
+      toolName === "screenshot" ? extractImageData(result) : undefined;
+    const output =
+      typeof result === "string" ? result.slice(0, 4000) : undefined;
+    return {
+      ...baseEvent,
+      type: "browser",
+      payload: {
+        toolCallId,
+        action: toolName as import("./types").BrowserAction,
+        summary: summarizeBrowser(toolName, args),
+        imageData,
+        output,
+      },
+    };
+  }
+
+  const eventType = mapToolCallToEventType(toolName, args);
+  if (!eventType) return null;
 
   if (toolName === "computer") {
     if (eventType === "screenshot") {

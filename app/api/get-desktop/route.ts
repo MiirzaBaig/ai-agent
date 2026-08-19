@@ -1,9 +1,11 @@
-import { getDesktopURL } from "@/lib/e2b/utils";
+import { getBrowserStreamURL } from "@/lib/browser/session";
 
 export async function POST(request: Request) {
   try {
     const { sandboxId } = await request.json();
-    const result = await getDesktopURL(sandboxId || undefined);
+    // Provisions the sandbox + Chrome browser session and returns the live
+    // VNC stream URL so the user can watch the agent drive the browser.
+    const result = await getBrowserStreamURL(sandboxId || undefined);
     return Response.json(result);
   } catch (error) {
     console.error("Failed to get desktop URL:", error);

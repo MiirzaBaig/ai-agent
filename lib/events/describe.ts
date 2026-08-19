@@ -25,6 +25,17 @@ export function categoryOf(event: AgentEvent): EventCategory {
       return "command";
     case "wait":
       return "wait";
+    case "browser":
+      switch (event.payload.action) {
+        case "screenshot":
+          return "vision";
+        case "type":
+          return "input";
+        case "read":
+          return "command";
+        default:
+          return "navigation";
+      }
   }
 }
 
@@ -59,18 +70,42 @@ export function describeEvent(event: AgentEvent): string {
       return `Waited ${event.payload.duration}s`;
     case "bash":
       return `Ran \`${truncate(event.payload.command, 56)}\``;
+    case "browser": {
+      const { action, summary } = event.payload;
+      switch (action) {
+        case "navigate":
+          return `Opened ${truncate(summary, 56)}`;
+        case "click":
+          return `Clicked “${truncate(summary, 48)}”`;
+        case "type":
+          return `Typed ${truncate(summary, 48)}`;
+        case "read":
+          return `Read ${truncate(summary, 48)}`;
+        case "screenshot":
+          return "Captured page";
+        case "goBack":
+          return "Went back";
+      }
+    }
   }
 }
 
-/** Optional secondary detail (bash output, etc.) rendered under the label. */
+/** Optional secondary detail (bash output, page text, etc.) under the label. */
 export function detailOf(event: AgentEvent): string | undefined {
   if (event.type === "bash") return event.payload.output || undefined;
+  if (event.type === "browser") {
+    // Only surface text output for read/navigate — not for screenshots.
+    if (event.payload.action === "read" || event.payload.action === "navigate") {
+      return event.payload.output || undefined;
+    }
+  }
   return undefined;
 }
 
 /** The captured screenshot for this event, if any (base64 PNG, no data: prefix). */
 export function screenshotOf(event: AgentEvent): string | undefined {
   if (event.type === "screenshot") return event.payload.imageData;
+  if (event.type === "browser") return event.payload.imageData;
   return undefined;
 }
 
