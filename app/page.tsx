@@ -246,16 +246,14 @@ export default function Chat() {
           <ResizablePanelGroup direction="horizontal" className="h-full flex-1">
             {/* Chat Panel (Center) */}
             <ResizablePanel defaultSize={50} minSize={30} className="flex flex-col">
-              {/* Slim top bar: model selector (name lives in the sidebar now) */}
-              <div className="nb-paper px-4 pt-4 pb-3">
-                <div className="nb-border nb-shadow rounded-xl bg-white py-2 pl-3 pr-2 flex justify-end items-center gap-1.5">
-                  <ModelSelector
-                    modelId={modelId}
-                    onChange={setModelId}
-                    disabled={isLoading}
-                  />
-                  <DeployButton />
-                </div>
+              {/* Slim top bar — sidebar owns the identity now. */}
+              <div className="nb-paper flex items-center justify-end gap-1.5 border-b border-zinc-200 px-4 py-2.5">
+                <ModelSelector
+                  modelId={modelId}
+                  onChange={setModelId}
+                  disabled={isLoading}
+                />
+                <DeployButton />
               </div>
               <V2Announcement />
               {usage.runs > 0 && (
