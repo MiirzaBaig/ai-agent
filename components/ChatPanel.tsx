@@ -21,6 +21,7 @@ interface ChatPanelProps {
   stop: () => void;
   setInput: (input: string) => void;
   onToolCallClick?: (toolCallId: string) => void;
+  onRegenerate?: () => void;
 }
 
 export function ChatPanel({
@@ -34,6 +35,7 @@ export function ChatPanel({
   stop,
   setInput,
   onToolCallClick,
+  onRegenerate,
 }: ChatPanelProps) {
   const [containerRef, endRef] = useScrollToBottom();
   const lastScrollTop = useRef(0);
@@ -98,6 +100,7 @@ export function ChatPanel({
               status={status}
               isLatestMessage={i === messages.length - 1}
               onToolCallClick={onToolCallClick}
+              onRegenerate={onRegenerate}
             />
           ))}
           <AgentActivity

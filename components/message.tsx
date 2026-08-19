@@ -8,6 +8,7 @@ import { Streamdown } from "streamdown";
 
 import { cn } from "@/lib/utils";
 import { SentryMark } from "./icons";
+import { MessageActions } from "./MessageActions";
 
 const messageVariants = {
   hidden: { y: 6, opacity: 0, filter: "blur(3px)" },
@@ -23,12 +24,14 @@ const PurePreviewMessage = ({
   message,
   isLatestMessage,
   status,
+  onRegenerate,
 }: {
   message: UIMessage;
   isLoading: boolean;
   status: "error" | "submitted" | "streaming" | "ready";
   isLatestMessage: boolean;
   onToolCallClick?: (toolCallId: string) => void;
+  onRegenerate?: () => void;
 }) => {
   // Only text parts render in the chat. Tool calls (navigate/click/read/…) are
   // shown in the Evidence timeline on the right, not inline here.
@@ -36,6 +39,15 @@ const PurePreviewMessage = ({
     (p) => p.type === "text" && !isToolUIPart(p),
   );
   if (textParts.length === 0) return null;
+
+  const isAssistant = message.role === "assistant";
+  const answerText = textParts
+    .map((p) => (p.type === "text" ? p.text : ""))
+    .join("\n\n")
+    .trim();
+  // Show actions once the assistant reply has settled (not mid-stream).
+  const showActions =
+    isAssistant && answerText.length > 0 && !(isLatestMessage && status !== "ready");
 
   return (
     <AnimatePresence key={message.id}>
@@ -94,6 +106,13 @@ const PurePreviewMessage = ({
                 </motion.div>
               ) : null,
             )}
+            {showActions && (
+              <MessageActions
+                text={answerText}
+                isLatest={isLatestMessage}
+                onRegenerate={onRegenerate}
+              />
+            )}
           </div>
         </div>
       </motion.div>
@@ -105,8 +124,10 @@ export const PreviewMessage = memo(
   PurePreviewMessage,
   (prevProps, nextProps) => {
     if (prevProps.status !== nextProps.status) return false;
+    if (prevProps.isLatestMessage !== nextProps.isLatestMessage) return false;
     if (!equal(prevProps.message.parts, nextProps.message.parts)) return false;
     if (prevProps.onToolCallClick !== nextProps.onToolCallClick) return false;
+    if (prevProps.onRegenerate !== nextProps.onRegenerate) return false;
     return true;
   },
 );

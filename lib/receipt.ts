@@ -25,6 +25,38 @@ function esc(s: string): string {
   );
 }
 
+// Render a small, safe subset of markdown (bold, italic, inline code, bullet
+// lists, line breaks). Escapes first, so no user text can inject HTML.
+function mdToHtml(src: string): string {
+  const inline = (line: string) =>
+    esc(line)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, "$1<em>$2</em>")
+      .replace(/`(.+?)`/g, "<code>$1</code>");
+
+  const out: string[] = [];
+  let inList = false;
+  for (const raw of src.split(/\r?\n/)) {
+    const line = raw.trim();
+    const bullet = line.match(/^[-*•]\s+(.*)$/);
+    if (bullet) {
+      if (!inList) {
+        out.push("<ul>");
+        inList = true;
+      }
+      out.push(`<li>${inline(bullet[1])}</li>`);
+      continue;
+    }
+    if (inList) {
+      out.push("</ul>");
+      inList = false;
+    }
+    if (line) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (inList) out.push("</ul>");
+  return out.join("");
+}
+
 export async function buildReceiptHtml(opts: {
   task: string;
   answer: string;
@@ -109,7 +141,12 @@ export async function buildReceiptHtml(opts: {
   .label{flex:1}
   .dur{font-size:11px;color:#a1a1aa;font-variant-numeric:tabular-nums}
   .shot{display:block;width:100%;max-height:420px;object-fit:cover;object-position:top;border-top:2px solid var(--ink)}
-  .answer{white-space:pre-wrap}
+  .answer p{margin:0 0 10px}
+  .answer p:last-child{margin-bottom:0}
+  .answer ul{margin:0 0 10px;padding-left:20px}
+  .answer li{margin:2px 0}
+  .answer strong{font-weight:800}
+  .answer code{background:#ececec}
   .foot{text-align:center;font-size:11px;color:#a1a1aa;margin-top:20px}
   code{background:#ececec;border-radius:4px;padding:1px 5px;font-size:12px;word-break:break-all}
   .film{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
@@ -137,7 +174,7 @@ export async function buildReceiptHtml(opts: {
   <h2>Steps (${events.length})</h2>
   <ol class="steps">${steps}</ol>
 
-  ${answer ? `<h2>Result</h2><div class="card answer">${esc(answer)}</div>` : ""}
+  ${answer ? `<h2>Result</h2><div class="card answer">${mdToHtml(answer)}</div>` : ""}
 
   <div class="card">
     <h2 style="margin-top:0">Integrity</h2>

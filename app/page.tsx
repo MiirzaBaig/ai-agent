@@ -70,6 +70,7 @@ export default function Chat() {
     status,
     stop: stopGeneration,
     setMessages,
+    regenerate,
   } = useChat({
     id: currentSessionId ?? undefined,
 
@@ -237,6 +238,14 @@ export default function Chat() {
     sendMessage({ text });
   };
 
+  const handleRegenerate = async () => {
+    if (status !== "ready") return;
+    // Fresh run — clear the old evidence so the timeline/filmstrip rebuild.
+    clearEvents();
+    await ensureBrowser();
+    regenerate();
+  };
+
   const isLoading = status !== "ready";
 
   return (
@@ -290,6 +299,7 @@ export default function Chat() {
                 stop={stop}
                 setInput={setInput}
                 onToolCallClick={setSelectedToolCallId}
+                onRegenerate={handleRegenerate}
               />
             </ResizablePanel>
 
@@ -369,6 +379,7 @@ export default function Chat() {
                   stop={stop}
                   setInput={setInput}
                   onToolCallClick={setSelectedToolCallId}
+                  onRegenerate={handleRegenerate}
                 />
               </div>
             </>
