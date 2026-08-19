@@ -4,13 +4,15 @@ import { tool } from "ai";
 import { z } from "zod";
 import { getBrowserSession, type BrowserSession } from "./session";
 
-// A short, model-friendly view of the page after each action, so the agent can
-// decide the next step without always needing a screenshot.
-async function pageContext(session: BrowserSession): Promise<string> {
+// Every browser tool returns this shape: `text` goes to the model (cheap), and
+// `shot` (base64 PNG) is captured after the action so the UI can build a live
+// filmstrip / thumbnails of what the agent actually saw at each step.
+type ActionResult = { text: string; shot?: string };
+
+async function pageText(session: BrowserSession): Promise<string> {
   const { page } = session;
   const url = page.url();
   const title = await page.title().catch(() => "");
-  // Trimmed visible text — enough to reason over, cheap on tokens.
   const text = await page
     .evaluate(() => {
       const body = document.body;
@@ -21,12 +23,32 @@ async function pageContext(session: BrowserSession): Promise<string> {
   return `URL: ${url}\nTitle: ${title}\n\nVisible text (trimmed):\n${text}`;
 }
 
-async function screenshotB64(session: BrowserSession): Promise<string> {
-  const buf = await session.page.screenshot({ type: "png" });
-  return Buffer.from(buf).toString("base64");
+async function screenshotB64(session: BrowserSession): Promise<string | undefined> {
+  try {
+    const buf = await session.page.screenshot({ type: "png" });
+    return Buffer.from(buf).toString("base64");
+  } catch {
+    return undefined;
+  }
 }
 
-/** Build the browser tool set bound to a sandbox's live Playwright page. */
+/** Text for the model + a fresh screenshot for the UI, after an action. */
+async function actionResult(session: BrowserSession): Promise<ActionResult> {
+  const [text, shot] = await Promise.all([
+    pageText(session),
+    screenshotB64(session),
+  ]);
+  return { text, shot };
+}
+
+// Model output for browser tools: send only the text (the screenshot is for the
+// UI filmstrip, not the model — keeps token cost down).
+function toModelText(result: { output: unknown }) {
+  const out = result.output as ActionResult | string | undefined;
+  const text = typeof out === "string" ? out : (out?.text ?? "");
+  return { type: "content" as const, value: [{ type: "text" as const, text }] };
+}
+
 export function browserTools(sandboxId?: string) {
   const withSession = async <T>(
     fn: (s: BrowserSession) => Promise<T>,
@@ -45,8 +67,9 @@ export function browserTools(sandboxId?: string) {
       withSession(async (s) => {
         const target = /^https?:\/\//i.test(url) ? url : `https://${url}`;
         await s.page.goto(target, { waitUntil: "domcontentloaded" });
-        return pageContext(s);
+        return actionResult(s);
       }),
+    toModelOutput: toModelText,
   });
 
   const click = tool({
@@ -57,25 +80,23 @@ export function browserTools(sandboxId?: string) {
         .string()
         .optional()
         .describe("Visible text of the element to click"),
-      selector: z
-        .string()
-        .optional()
-        .describe("CSS selector, if you know it"),
+      selector: z.string().optional().describe("CSS selector, if you know it"),
     }),
     execute: async ({ text, selector }) =>
-      withSession(async (s) => {
+      withSession(async (s): Promise<ActionResult> => {
         if (selector) {
           await s.page.locator(selector).first().click();
         } else if (text) {
           await s.page.getByText(text, { exact: false }).first().click();
         } else {
-          return "Provide either text or selector to click.";
+          return { text: "Provide either text or selector to click." };
         }
         await s.page
           .waitForLoadState("domcontentloaded", { timeout: 8000 })
           .catch(() => {});
-        return pageContext(s);
+        return actionResult(s);
       }),
+    toModelOutput: toModelText,
   });
 
   const type = tool({
@@ -109,8 +130,9 @@ export function browserTools(sandboxId?: string) {
             .waitForLoadState("domcontentloaded", { timeout: 8000 })
             .catch(() => {});
         }
-        return pageContext(s);
+        return actionResult(s);
       }),
+    toModelOutput: toModelText,
   });
 
   const read = tool({
@@ -123,16 +145,19 @@ export function browserTools(sandboxId?: string) {
         .describe("CSS selector to read; omit for the whole page"),
     }),
     execute: async ({ selector }) =>
-      withSession(async (s) => {
+      withSession(async (s): Promise<ActionResult> => {
         if (selector) {
           const t = await s.page
             .locator(selector)
             .allTextContents()
             .catch(() => []);
-          return t.join("\n").slice(0, 5000) || "(no matching elements)";
+          return {
+            text: t.join("\n").slice(0, 5000) || "(no matching elements)",
+          };
         }
-        return pageContext(s);
+        return actionResult(s);
       }),
+    toModelOutput: toModelText,
   });
 
   const screenshot = tool({
@@ -141,21 +166,10 @@ export function browserTools(sandboxId?: string) {
     inputSchema: z.object({}),
     execute: async () =>
       withSession(async (s) => ({
-        type: "image" as const,
-        data: await screenshotB64(s),
+        text: "Screenshot captured.",
+        shot: await screenshotB64(s),
       })),
-    toModelOutput(result) {
-      const out = result.output as { type?: string; data?: string };
-      if (out?.type === "image" && out.data) {
-        return {
-          type: "content",
-          value: [
-            { type: "image-data", mediaType: "image/png", data: out.data },
-          ],
-        };
-      }
-      return { type: "content", value: [{ type: "text", text: "screenshot" }] };
-    },
+    toModelOutput: toModelText,
   });
 
   const goBack = tool({
@@ -164,8 +178,9 @@ export function browserTools(sandboxId?: string) {
     execute: async () =>
       withSession(async (s) => {
         await s.page.goBack({ waitUntil: "domcontentloaded" }).catch(() => {});
-        return pageContext(s);
+        return actionResult(s);
       }),
+    toModelOutput: toModelText,
   });
 
   return { navigate, click, type, read, screenshot, goBack };

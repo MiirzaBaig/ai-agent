@@ -243,6 +243,35 @@
   margin: 0.5rem 0;
 }
 
+/* Brutalist range slider (replay scrubber) */
+.nb-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 6px;
+  background: #3f3f46;
+  border: 2px solid #111;
+  outline: none;
+}
+.nb-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #c2f542;
+  border: 2px solid #111;
+  cursor: pointer;
+}
+.nb-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #c2f542;
+  border: 2px solid #111;
+  cursor: pointer;
+}
+
 /* Ensure placeholder is always visible */
 input::placeholder {
   opacity: 1 !important;

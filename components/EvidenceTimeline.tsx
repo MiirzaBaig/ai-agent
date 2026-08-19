@@ -12,8 +12,10 @@ import {
   ShieldCheck,
   Loader2,
   AlertCircle,
+  Download,
 } from "lucide-react";
 import { useEventStore } from "@/lib/events/store";
+import { downloadReceipt } from "@/lib/receipt";
 import type { AgentEvent } from "@/lib/events/types";
 import {
   describeEvent,
@@ -88,6 +90,15 @@ function TimelineRow({ event }: { event: AgentEvent }) {
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-zinc-700">
             {describeEvent(event)}
           </span>
+          {/* Live thumbnail — the agent's actual view at this step */}
+          {shot && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`data:image/png;base64,${shot}`}
+              alt=""
+              className="h-8 w-12 flex-shrink-0 rounded border-2 border-[var(--nb-ink)] object-cover object-top"
+            />
+          )}
           {event.duration != null && (
             <span className="flex-shrink-0 text-[10px] tabular-nums text-zinc-400">
               {formatDuration(event.duration)}
@@ -170,10 +181,22 @@ export function EvidenceTimeline() {
             Evidence Timeline
           </span>
         </div>
-        <span className="text-[10px] font-bold uppercase tabular-nums text-zinc-500">
-          {verified} verified · {events.length} step
-          {events.length === 1 ? "" : "s"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tabular-nums text-zinc-500">
+            {verified} verified · {events.length} step
+            {events.length === 1 ? "" : "s"}
+          </span>
+          <button
+            onClick={() =>
+              downloadReceipt({ task: "Agent run", answer: "", events })
+            }
+            className="flex h-6 items-center gap-1 rounded-md nb-border bg-white px-2 text-[9px] font-black uppercase tracking-wide text-[var(--nb-ink)] hover:bg-[var(--nb-lime)]"
+            title="Export a shareable proof receipt"
+          >
+            <Download className="h-3 w-3" />
+            Receipt
+          </button>
+        </div>
       </div>
 
       {/* The trail */}

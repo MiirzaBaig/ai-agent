@@ -99,11 +99,20 @@ function createEventFromToolCall(
   };
 
   // Browser agent tools → a single browser event with a human summary.
+  // Every action now returns { text, shot } — capture the screenshot for the
+  // filmstrip and the text for the expandable detail.
   if (BROWSER_ACTIONS.has(toolName)) {
+    const r = result as { text?: string; shot?: string } | string | undefined;
     const imageData =
-      toolName === "screenshot" ? extractImageData(result) : undefined;
-    const output =
-      typeof result === "string" ? result.slice(0, 4000) : undefined;
+      r && typeof r === "object" && typeof r.shot === "string"
+        ? r.shot
+        : extractImageData(result);
+    const text =
+      typeof r === "string"
+        ? r
+        : r && typeof r === "object"
+          ? r.text
+          : undefined;
     return {
       ...baseEvent,
       type: "browser",
@@ -112,7 +121,7 @@ function createEventFromToolCall(
         action: toolName as import("./types").BrowserAction,
         summary: summarizeBrowser(toolName, args),
         imageData,
-        output,
+        output: text?.slice(0, 4000),
       },
     };
   }
