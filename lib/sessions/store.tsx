@@ -97,27 +97,8 @@ export function SessionStoreProvider({ children }: { children: React.ReactNode }
   const deleteSession = useCallback(
     (sessionId: string) => {
       setSessions((prev) => {
-        const sessionToDelete = prev.find((s) => s.id === sessionId);
-        
-        // Kill desktop sandbox if it exists
-        if (sessionToDelete?.sandboxId) {
-          // Use sendBeacon for reliable cleanup even if page is closing
-          try {
-            navigator.sendBeacon(
-              `/api/kill-desktop?sandboxId=${encodeURIComponent(sessionToDelete.sandboxId)}`
-            );
-          } catch {
-            // Fallback to fetch if sendBeacon fails
-            fetch("/api/kill-desktop", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sandboxId: sessionToDelete.sandboxId }),
-            }).catch((err) => {
-              console.warn("Failed to kill desktop sandbox:", err);
-            });
-          }
-        }
-        
+        // Local build: Chrome is a single shared browser across chat sessions,
+        // so deleting a chat session must not close it.
         const filtered = prev.filter((s) => s.id !== sessionId);
         localStorage.setItem("ai-sessions", JSON.stringify(filtered));
         

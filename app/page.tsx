@@ -5,8 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
 import { ChatPanel } from "@/components/ChatPanel";
-import { VNCPanel } from "@/components/VNCPanel";
-import { VNCModal } from "@/components/VNCModal";
+import { ActivityPanel } from "@/components/ActivityPanel";
 import { SessionList } from "@/components/SessionList";
 import { useSessionStore } from "@/lib/sessions/store";
 import { useEventStore } from "@/lib/events/store";
@@ -24,22 +23,14 @@ import { SessionTelemetry } from "@/components/SessionTelemetry";
 import { V2Announcement } from "@/components/V2Announcement";
 import { useModel } from "@/lib/use-model";
 import { useUsage } from "@/lib/use-usage";
-import { Monitor } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default function Chat() {
   const [selectedToolCallId, setSelectedToolCallId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [showVNCModal, setShowVNCModal] = useState(false);
   const stoppingRef = useRef(false);
 
-  // VNC state - isolated from chat/event updates
-  const [vncStreamUrl, setVncStreamUrl] = useState<string | null>(null);
-  const [vncSandboxId, setVncSandboxId] = useState<string | null>(null);
-
-  // Track which session the current sandbox belongs to
-  const currentSandboxSessionRef = useRef<string | null>(null);
+  // Local browser session id (Chrome runs on the user's machine — no VNC).
+  const [browserSessionId, setBrowserSessionId] = useState<string | null>(null);
 
   const {
     currentSessionId,
@@ -58,8 +49,8 @@ export default function Chat() {
 
   // Per-request body (sandboxId, modelId) changes during a session. v5 captures
   // the transport body once, so read the latest values from refs at send time.
-  const sandboxIdRef = useRef(vncSandboxId);
-  sandboxIdRef.current = vncSandboxId;
+  const sandboxIdRef = useRef(browserSessionId);
+  sandboxIdRef.current = browserSessionId;
   const modelIdRef = useRef(modelId);
   modelIdRef.current = modelId;
 
@@ -197,113 +188,45 @@ export default function Chat() {
 
   const isLoading = status !== "ready";
 
-  const refreshDesktop = async () => {
-    try {
-      setIsInitializing(true);
-      // Always create a fresh desktop when user clicks refresh
-      const response = await fetch("/api/get-desktop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sandboxId: null }), // Always create new on manual refresh
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || "Failed to get desktop URL";
-        throw new Error(errorMessage);
-      }
-      const { streamUrl, id } = await response.json();
-      setVncStreamUrl(streamUrl);
-      setVncSandboxId(id);
-      if (currentSessionId) {
-        currentSandboxSessionRef.current = currentSessionId;
-        updateSessionSandboxId(currentSessionId, id);
-      }
-    } catch (err) {
-      console.error("Failed to refresh desktop:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to refresh desktop";
-      toast.error("Failed to refresh desktop", {
-        description: errorMessage,
-      });
-    } finally {
-      setIsInitializing(false);
-    }
-  };
-
-  // Initialize desktop on mount or session change
+  // Connect the local Chrome browser session once on mount. Unlike the cloud
+  // build there's a single persistent browser — no per-session ephemeral VMs,
+  // and we never kill the user's Chrome on tab close.
   useEffect(() => {
-    if (!currentSessionId) return;
-
-    const init = async () => {
+    let cancelled = false;
+    const connect = async () => {
       try {
         setIsInitializing(true);
-
-        // Check if we're switching sessions - if so liek, we need a fresh desktop
-        // E2B desktops are ephemeral, so foreach session should get its own VM
-        const isNewSession = currentSandboxSessionRef.current !== currentSessionId;
-
-        // Don't try to reuse the old sandbox as it belongs to another session
-        const sandboxToUse = isNewSession ? null : vncSandboxId;
-
         const response = await fetch("/api/get-desktop", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sandboxId: sandboxToUse }),
+          body: JSON.stringify({ sandboxId: null }),
         });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error || "Failed to get desktop URL";
-          throw new Error(errorMessage);
+          throw new Error(errorData.error || "Failed to start browser");
         }
-        const { streamUrl, id } = await response.json();
-        setVncStreamUrl(streamUrl);
-        setVncSandboxId(id);
-        currentSandboxSessionRef.current = currentSessionId;
-        updateSessionSandboxId(currentSessionId, id);
+        const { id } = await response.json();
+        if (cancelled) return;
+        setBrowserSessionId(id);
+        if (currentSessionId) updateSessionSandboxId(currentSessionId, id);
       } catch (err) {
-        console.error("Failed to initialize desktop:", err);
-        const errorMessage = err instanceof Error ? err.message : "Failed to initialize desktop";
-        toast.error("Failed to initialize desktop", {
-          description: errorMessage,
+        console.error("Failed to start browser session:", err);
+        toast.error("Couldn't start Chrome", {
+          description:
+            err instanceof Error
+              ? err.message
+              : "Make sure Google Chrome is installed.",
         });
       } finally {
-        setIsInitializing(false);
+        if (!cancelled) setIsInitializing(false);
       }
     };
-
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSessionId]);
-
-  // Kill desktop on page close
-  useEffect(() => {
-    if (!vncSandboxId) return;
-
-    const killDesktop = () => {
-      if (!vncSandboxId) return;
-      navigator.sendBeacon(
-        `/api/kill-desktop?sandboxId=${encodeURIComponent(vncSandboxId)}`,
-      );
+    connect();
+    return () => {
+      cancelled = true;
     };
-
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-    if (isIOS || isSafari) {
-      window.addEventListener("pagehide", killDesktop);
-      return () => {
-        window.removeEventListener("pagehide", killDesktop);
-        killDesktop();
-      };
-    } else {
-      window.addEventListener("beforeunload", killDesktop);
-      return () => {
-        window.removeEventListener("beforeunload", killDesktop);
-        killDesktop();
-      };
-    }
-  }, [vncSandboxId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ScrollProvider>
@@ -348,13 +271,10 @@ export default function Chat() {
 
             <ResizableHandle withHandle />
 
-            {/* VNC Panel (Right) */}
-            <ResizablePanel defaultSize={50} minSize={30} className="bg-black">
-              <VNCPanel
-                streamUrl={vncStreamUrl}
-                isInitializing={isInitializing}
-                onRefreshDesktop={refreshDesktop}
-                selectedToolCallId={selectedToolCallId}
+            {/* Live Activity Panel (Right) — the real Chrome is on your screen */}
+            <ResizablePanel defaultSize={50} minSize={30} className="bg-zinc-950">
+              <ActivityPanel
+                isConnected={!!browserSessionId && !isInitializing}
                 isStreaming={status === "streaming" || status === "submitted"}
               />
             </ResizablePanel>
@@ -367,24 +287,6 @@ export default function Chat() {
             <div className="nb-border nb-shadow rounded-xl bg-white py-1.5 pl-2.5 pr-1.5 flex flex-1 justify-between items-center">
               <SentryLogo />
               <div className="flex items-center gap-1.5">
-                {/* VNC Toggle Button in Header */}
-                <Button
-                  onClick={() => setShowVNCModal(true)}
-                  size="sm"
-                  variant="outline"
-                  className={cn(
-                    "h-8 px-2.5 gap-1.5 rounded-lg nb-border nb-shadow-sm bg-white text-xs font-bold",
-                    vncStreamUrl && "bg-[var(--nb-lime)]"
-                  )}
-                >
-                  <Monitor className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="font-medium hidden min-[375px]:inline">
-                    {isInitializing ? "Starting..." : "Desktop"}
-                  </span>
-                  {vncStreamUrl && !isInitializing && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
-                  )}
-                </Button>
                 <ModelSelector
                   modelId={modelId}
                   onChange={setModelId}
@@ -413,16 +315,6 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Mobile VNC Modal */}
-        <VNCModal
-          isOpen={showVNCModal}
-          onClose={() => setShowVNCModal(false)}
-          streamUrl={vncStreamUrl}
-          isInitializing={isInitializing}
-          onRefreshDesktop={refreshDesktop}
-          selectedToolCallId={selectedToolCallId}
-          isStreaming={status === "streaming" || status === "submitted"}
-        />
       </div>
     </ScrollProvider>
   );

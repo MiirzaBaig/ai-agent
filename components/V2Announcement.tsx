@@ -12,7 +12,7 @@ const CHANGES = [
   "Approval gates",
   "Cost telemetry",
   "AI SDK v5",
-  "E2B Desktop 2.3.2",
+  "Local Chrome agent",
   "Sentry UI rebuild",
 ];
 
@@ -58,8 +58,7 @@ export function V2Announcement() {
                   </span>
                   <span className="mx-1.5 font-bold text-zinc-400">/</span>
                   <span className="font-semibold text-zinc-700">
-                    AI SDK v5, E2B Desktop 2.3.2, approvals, evidence,
-                    telemetry.
+                    Local Chrome agent, AI SDK v5, evidence, telemetry.
                   </span>
                 </div>
               </div>
