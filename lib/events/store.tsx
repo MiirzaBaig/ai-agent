@@ -7,6 +7,7 @@ type EventStoreContextType = {
   events: AgentEvent[];
   addEvent: (event: AgentEvent) => void;
   updateEvent: (id: string, status: AgentEvent["status"], duration?: number) => void;
+  replaceEvent: (event: AgentEvent) => void;
   getEventCounts: () => EventCounts;
   getAgentStatus: () => AgentStatus;
   clearEvents: () => void;
@@ -43,6 +44,14 @@ export function EventStoreProvider({ children }: { children: React.ReactNode }) 
     },
     []
   );
+
+  // Replace an event in place (keeps position) — used when a tool result with
+  // its screenshot arrives and we need to swap in the fully-populated event.
+  const replaceEvent = useCallback((event: AgentEvent) => {
+    setEvents((prev) =>
+      prev.map((e) => (e.id === event.id ? event : e)),
+    );
+  }, []);
 
   const getEventCounts = useCallback((): EventCounts => {
     const counts: EventCounts = {};
@@ -121,6 +130,7 @@ export function EventStoreProvider({ children }: { children: React.ReactNode }) 
         events,
         addEvent,
         updateEvent,
+        replaceEvent,
         getEventCounts,
         getAgentStatus,
         clearEvents,

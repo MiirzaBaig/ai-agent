@@ -225,7 +225,7 @@ function createEventFromToolCall(
 }
 
 export function useExtractEvents(messages: UIMessage[], sessionId: string) {
-  const { addEvent, updateEvent, events } = useEventStore();
+  const { addEvent, updateEvent, replaceEvent, events } = useEventStore();
 
   useEffect(() => {
     if (!sessionId) return;
@@ -268,28 +268,40 @@ export function useExtractEvents(messages: UIMessage[], sessionId: string) {
       const existingEvent = events.find((e) => e.id === toolCall.id);
 
       if (!existingEvent) {
-        // Create new event
+        // Create new event (call or, if it arrived complete, result).
         const event = createEventFromToolCall(
           toolCall.id,
           toolCall.toolName,
           toolCall.args,
           toolCall.state,
           sessionId,
-          toolCall.result
+          toolCall.result,
         );
-        if (event) {
-          addEvent(event);
-        }
-      } else {
-        // Update existing event only if status changed
-        if (toolCall.state === "result" && existingEvent.status === "pending") {
-          const duration = Date.now() - existingEvent.timestamp;
-          const blocked =
-            typeof toolCall.result === "string" &&
-            toolCall.result.startsWith("⛔ Blocked");
-          const status: AgentEvent["status"] =
-            toolCall.result === "User aborted" || blocked ? "error" : "complete";
-          updateEvent(toolCall.id, status, duration);
+        if (event) addEvent(event);
+      } else if (
+        toolCall.state === "result" &&
+        existingEvent.status === "pending"
+      ) {
+        // The result (with its screenshot + output) just arrived. Rebuild the
+        // event so imageData/output are attached — a plain status update would
+        // drop them and the replay/thumbnails would stay empty.
+        const rebuilt = createEventFromToolCall(
+          toolCall.id,
+          toolCall.toolName,
+          toolCall.args,
+          "result",
+          sessionId,
+          toolCall.result,
+        );
+        if (rebuilt) {
+          rebuilt.duration = Date.now() - existingEvent.timestamp;
+          replaceEvent(rebuilt);
+        } else {
+          updateEvent(
+            toolCall.id,
+            "complete",
+            Date.now() - existingEvent.timestamp,
+          );
         }
       }
     });
