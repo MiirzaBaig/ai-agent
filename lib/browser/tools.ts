@@ -17,13 +17,15 @@ async function pageText(session: BrowserSession): Promise<string> {
     .evaluate(() => {
       const body = document.body;
       if (!body) return "";
-      return (body.innerText || "").replace(/\s+/g, " ").slice(0, 3000);
+      return (body.innerText || "").replace(/\s+/g, " ").slice(0, 1800);
     })
     .catch(() => "");
   return `URL: ${url}\nTitle: ${title}\n\nVisible text (trimmed):\n${text}`;
 }
 
-async function screenshotB64(session: BrowserSession): Promise<string | undefined> {
+async function screenshotB64(
+  session: BrowserSession,
+): Promise<string | undefined> {
   try {
     const buf = await session.page.screenshot({ type: "png" });
     return Buffer.from(buf).toString("base64");
@@ -67,7 +69,9 @@ export function browserTools(sandboxId?: string) {
     description:
       "Navigate the browser to a URL. Use full https URLs. Returns the resulting page URL, title and visible text.",
     inputSchema: z.object({
-      url: z.string().describe("The full URL to open, e.g. https://example.com"),
+      url: z
+        .string()
+        .describe("The full URL to open, e.g. https://example.com"),
     }),
     execute: async ({ url }) =>
       withSession(async (s) => {
@@ -158,7 +162,7 @@ export function browserTools(sandboxId?: string) {
             .allTextContents()
             .catch(() => []);
           return {
-            text: t.join("\n").slice(0, 5000) || "(no matching elements)",
+            text: t.join("\n").slice(0, 2500) || "(no matching elements)",
           };
         }
         return actionResult(s);

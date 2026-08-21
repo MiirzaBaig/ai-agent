@@ -1,322 +1,139 @@
-Author: Mirza Baig
+<div align="center">
 
-# AI SDK Computer Use - Production-Quality Agent Dashboard
+<img src="app/icon.svg" width="76" height="76" alt="sentry logo" />
 
-<a href="https://ai-sdk-starter-groq.vercel.app">
-  <h1 align="center">AI SDK Computer Use Demo</h1>
-</a>
+# sentry
 
-<p align="center">
-  A production-quality AI agent dashboard demonstrating Anthropic Claude Sonnet 4's computer use capabilities, built with Next.js, TypeScript, and the Vercel AI SDK. Features a two-panel dashboard with real-time agent observability, session management, and performance-optimized VNC viewer.
-</p>
+**an agent that drives a real browser for you, and shows its work.**
 
-<p align="center">
-  <a href="https://youtu.be/wE9YrEtfIHI">
-    <strong>📹 Watch Demo Video</strong>
-  </a>
-</p>
+you type a task in plain english. sentry opens a real chrome, clicks around, reads pages, and comes back with an answer. every step is on screen while it happens, and you can scrub back through it after. nothing is hidden.
 
-<p align="center">
-  <a href="#overview"><strong>Overview</strong></a> ·
-  <a href="#architecture"><strong>Architecture</strong></a> ·
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#technical-decisions"><strong>Technical Decisions</strong></a> ·
-  <a href="#setup"><strong>Setup</strong></a> ·
-  <a href="#project-structure"><strong>Project Structure</strong></a>
-</p>
+[live demo](https://ai-sdk-computer-use-theta-dun.vercel.app/) · [how it works](#how-it-works) · [what it does](#what-it-does) · [run it locally](#run-it-locally) · [layout](#project-layout)
+
+</div>
 
 ---
 
-## Overview
+## the short version
 
-This project extends the original [vercel-labs/ai-sdk-computer-use](https://github.com/vercel-labs/ai-sdk-computer-use) demo into a production-quality AI agent dashboard. The dashboard provides real-time observability into AI agent actions, session management, and a performance-optimized interface for monitoring computer-use agents.
+this project has lived two lives.
 
-### 🎥 Demo Video
+**before.** the first build (about 8 months ago) was a computer-use agent. it ran a full linux desktop inside a cloud sandbox, streamed the whole screen back over vnc, and moved a mouse pixel by pixel. it worked, but it was heavy. you were watching a video of a desktop, screenshots were the only way the model could "see," and every action meant another full-frame image round trip. slow, pricey, and hard to trust because you could not really tell *why* it clicked where it clicked.
 
-Watch the full demo video showcasing the dashboard features, live agent interactions, and technical implementation:
+**now.** sentry is a browser-first agent. instead of pushing pixels around a desktop, it talks to chrome directly at the dom level. six small tools: `navigate`, `click`, `type`, `read`, `screenshot`, `goBack`. it reads the actual text of a page instead of squinting at a picture of it, so it is faster, cheaper, and its choices make sense. you still get a live view of the browser, but now it sits next to a running record of every step, with a screenshot pinned to each one. same product idea, taken through two full generations of the engine underneath.
 
-**[📹 Watch Demo on YouTube](https://youtu.be/wE9YrEtfIHI)**
+that is the story worth telling. not "i built a demo," but "i built it, learned where the arch hurt, and rebuilt the core."
 
-### What We Built
-
-1. **Two-Panel Dashboard Layout**
-   - **Left Panel**: Chat interface with streaming messages, inline tool call visualizations, and collapsible debug panel
-   - **Right Panel**: VNC viewer with expanded tool call details
-   - Horizontally resizable panels using `react-resizable-panels`
-
-2. **Typed Event Pipeline**
-   - Structured event system capturing all agent actions
-   - TypeScript discriminated unions for type safety (zero `any` types)
-   - Automatic event extraction from AI SDK messages
-   - Derived state: event counts, agent status, timeline visualization
-
-3. **Session Management**
-   - Create, switch, and delete multiple chat sessions
-   - Persistent storage using `localStorage`
-   - Complete cleanup: messages, events, and desktop sandbox resources
-   - Proper session numbering even after deletions
-
-4. **Performance Optimization**
-   - VNC viewer isolated from chat/event state updates
-   - `React.memo` with custom comparison function
-   - Only re-renders when VNC stream URL changes
-
-5. **Mobile Support (Bonus)**
-   - Responsive layout for phone and tablet viewports
-   - VNC viewer accessible via modal on mobile
-   - Touch-friendly interactions throughout
+|  | before | now |
+|---|---|---|
+| **engine** | full linux desktop in a sandbox | real chrome, driven at the dom level |
+| **how it sees** | screenshots only | reads page text first, pixels on demand |
+| **how it acts** | mouse moves, pixel by pixel | clicks real elements by their text |
+| **the view** | a video stream of a desktop | live browser plus a step by step record |
+| **trust** | hard to tell why it clicked | every step logged, screenshotted, replayable |
+| **feel** | heavy and slow | fast, cheap, legible |
 
 ---
 
-## Architecture
-
-### System Flow Diagram
+## how it works
 
 ```mermaid
-graph TB
-    subgraph "Client (Next.js App Router)"
-        A[User Input] --> B[ChatPanel]
-        B --> C[useChat Hook]
-        C --> D[/api/chat Route]
-        
-        D --> E[Anthropic Claude API]
-        E --> F[Streaming Response]
-        F --> G[Tool Invocations]
-        
-        G --> H[useExtractEvents Hook]
-        H --> I[EventStore Context]
-        I --> J[localStorage Persistence]
-        
-        G --> K[Message Components]
-        K --> L[Tool Call Visualization]
-        L --> M[ToolCallDetails Panel]
-        
-        N[Session Management] --> O[SessionStore Context]
-        O --> P[localStorage Sessions]
-        
-        Q[VNC Viewer] --> R[E2B Desktop Sandbox]
-        R --> S[VNC Stream URL]
-        S --> Q
-        
-        I --> T[DebugPanel]
-        O --> U[SessionList]
-    end
-    
-    subgraph "Server Actions"
-        D --> V[E2B Tools]
-        V --> W[Desktop Sandbox]
-        W --> X[Screenshot/Click/Type/etc]
-    end
-    
-    style I fill:#3b82f6,color:#fff
-    style O fill:#3b82f6,color:#fff
-    style Q fill:#10b981,color:#fff
-    style T fill:#f59e0b,color:#fff
+flowchart LR
+    A["you type a task"] --> B["chat panel"]
+    B --> C["api/chat"]
+    C --> D["claude, agent loop"]
+    D --> E["browser tools"]
+    E --> F["chrome over cdp"]
+    F --> G["step events plus screenshots"]
+    G --> H["live view"]
+    G --> I["evidence timeline"]
+    G --> J["replay scrubber"]
+    D --> K["final answer plus receipt"]
 ```
 
-### Data Flow
+the browser runs on **browserbase** in production, so the public link just works, and on a **local chrome** in dev, so you can watch it move. the app picks the right one from the environment and the rest of the code never has to care.
 
-1. **User Input → AI Processing**
-   - User types message in `ChatPanel`
-   - `useChat` hook sends request to `/api/chat`
-   - Anthropic Claude processes request and streams response
-   - Tool invocations are extracted and displayed inline
+the flow, in plain terms:
 
-2. **Event Extraction → Storage**
-   - `useExtractEvents` hook monitors messages for tool calls
-   - Creates structured `AgentEvent` objects with discriminated unions
-   - Updates `EventStore` context with event status (pending → complete)
-   - Persists events to `localStorage` per session
+1. **you ask.** a task goes to `api/chat`, which runs an agent loop on claude with a capped step budget.
+2. **it acts.** each turn the model picks one of six dom tools. every tool call comes back with the current url, the page title, and the visible text, so the model decides the next move from real signal, not a guess.
+3. **it reads before it looks.** reading page text is the default because it is faster and cheaper. a screenshot only happens when something actually needs to be seen.
+4. **you watch.** the browser shows up live while it runs, right next to the chat.
+5. **you get proof.** every step lands on a timeline with a screenshot attached. when the run ends you get a clean answer up top plus a receipt you can save, copy, or share.
 
-3. **Session Management**
-   - `SessionStore` context manages multiple chat sessions
-   - Each session maintains isolated message and event history
-   - Desktop sandbox cleanup on session deletion
-   - Proper session numbering algorithm
-
-4. **VNC Viewer Isolation**
-   - VNC state (`vncStreamUrl`, `vncSandboxId`) isolated from chat state
-   - `VNCViewer` component memoized with custom comparison
-   - Only re-renders when stream URL changes
+the whole thing is built so a stranger can open the link, run a task, and trust what they saw, without reading a single line of code.
 
 ---
 
-## Features
+## what it does
 
-### Core Features
+**drives a real browser.** navigate, click by visible text, type into fields, submit forms, go back. it works on live sites, not a mock.
 
-- ✅ **Two-Panel Dashboard**: Horizontally resizable chat and VNC panels
-- ✅ **Streaming AI Responses**: Real-time streaming using Vercel AI SDK
-- ✅ **Tool Call Visualization**: Inline visualization of all agent actions
-- ✅ **Event Pipeline**: Structured event system with TypeScript discriminated unions
-- ✅ **Debug Panel**: Collapsible panel showing event counts, timeline, and agent status
-- ✅ **Session Management**: Create, switch, and delete multiple chat sessions
-- ✅ **localStorage Persistence**: Messages, events, and sessions persist across page reloads
-- ✅ **Performance Optimized**: VNC viewer never re-renders on chat updates
-- ✅ **Mobile Responsive**: Full mobile support with VNC modal
+**reads pages the smart way.** text first, pixels only when needed. that one choice is most of why it feels quick.
 
-### Technical Highlights
+**shows every step, live.** a running browser view sits right next to the chat. you are never guessing what it is doing.
 
-- **TypeScript**: Zero `any` types, discriminated unions, full type safety
-- **React Performance**: Memoization, clean component boundaries, optimized re-renders
-- **State Management**: Context API for global state, local state for component data
-- **Error Handling**: Graceful error handling for API failures and edge cases
-- **Code Quality**: Clear separation of concerns, organized file structure
+**keeps the receipts.** each step is recorded with a screenshot. scrub the timeline like a video, or open any step to see exactly what happened.
+
+**knows when to stop.** it avoids captchas, login walls, and cookie gates instead of banging on them. if a source is blocked it picks another. if it truly cannot finish, it says so and tells you what it found anyway.
+
+**runs on your pick of model.** switch between opus 4.8, sonnet 5, and haiku 4.5 from the header. cost and token use are tracked live so you can see the trade.
+
+**remembers your sessions.** create, switch, and delete runs. history and evidence persist per session in the browser.
+
+**works on your phone.** the live view, timeline, and per-message actions all fold down to a touch layout.
 
 ---
 
-## Technical Decisions
+## why it is built this way
 
-### 1. TypeScript Discriminated Unions
+**dom over pixels.** the biggest lesson from the first build. a computer-use desktop is general but blunt. for web tasks, talking to chrome directly is faster, cheaper, and far easier to reason about. the model reads real text and clicks real elements, so its behavior is legible.
 
-**File**: `lib/events/types.ts`
+**evidence is a feature, not an afterthought.** an agent you cannot audit is an agent you cannot trust. so every step is captured and replayable by default. the receipt at the end is the point, not a nice-to-have.
 
-We used TypeScript discriminated unions to create a type-safe event system without any `any` types:
+**two browser backends, one code path.** browserbase in the cloud so the public link just works, local chrome in dev so you can watch and debug. the app picks the right one from the environment, and the rest of the code does not care which.
 
-```typescript
-export type BaseEvent = {
-  id: string;
-  timestamp: number;
-  status: "pending" | "complete" | "error";
-  duration?: number;
-  sessionId: string;
-};
+**typed events end to end.** every action becomes a typed event with a status and a screenshot. the ui is just a view over that stream, which keeps the live view, timeline, and replay all in sync with zero guessing.
 
-export type ScreenshotEvent = BaseEvent & {
-  type: "screenshot";
-  payload: { toolCallId: string; coordinate?: [number, number]; imageData?: string };
-};
-
-export type AgentEvent = ScreenshotEvent | ClickEvent | TypeEvent | BashEvent | ...;
-```
-
-**Why**: Provides compile-time type safety, enables type narrowing, and ensures all event types are properly handled.
-
-### 2. VNC Performance Optimization
-
-**File**: `components/VNCViewer.tsx`
-
-The VNC viewer is memoized and isolated from chat state:
-
-```typescript
-export const VNCViewer = React.memo(
-  ({ streamUrl }: { streamUrl: string | null }) => { ... },
-  (prev, next) => prev.streamUrl === next.streamUrl // Only re-render if URL changes
-);
-```
-
-**Why**: Critical requirement - VNC must not re-render when chat messages update. Isolation prevents unnecessary re-renders.
-
-### 3. Context-Based State Management
-
-**Files**: `lib/events/store.tsx`, `lib/sessions/store.tsx`
-
-We used React Context API instead of external state libraries:
-
-```typescript
-export function EventStoreProvider({ children }: { children: React.ReactNode }) {
-  const [events, setEvents] = useState<AgentEvent[]>([]);
-  // ... derived state functions
-}
-```
-
-**Why**: Simple, appropriate for the scope, no external dependencies, easy to understand and maintain.
-
-### 4. Automatic Event Extraction
-
-**File**: `lib/events/hooks.ts`
-
-Events are automatically extracted from AI SDK messages:
-
-```typescript
-export function useExtractEvents(messages: Message[], sessionId: string) {
-  // Monitors messages for tool invocations
-  // Creates AgentEvent objects
-  // Updates event store with status changes
-}
-```
-
-**Why**: Reduces boilerplate, ensures all tool calls are tracked, provides automatic observability.
-
-### 5. Session Cleanup
-
-**File**: `lib/sessions/store.tsx`
-
-Complete cleanup on session deletion:
-
-```typescript
-const deleteSession = (sessionId: string) => {
-  // Remove from localStorage
-  localStorage.removeItem(`ai-messages-${sessionId}`);
-  localStorage.removeItem(`ai-events-${sessionId}`);
-  // Kill desktop sandbox
-  navigator.sendBeacon(`/api/kill-desktop?sandboxId=${sandboxId}`);
-};
-```
-
-**Why**: Prevents memory leaks, ensures proper resource cleanup, maintains clean session isolation.
+**small, sharp tool surface.** six tools, not sixty. fewer moving parts means the agent loop is easy to follow and hard to break.
 
 ---
 
-## Setup
+## run it locally
 
-### Prerequisites
+**you need**
 
-- Node.js 18+ and npm/pnpm/yarn
-- Anthropic API key with credits
-- E2B API key (free tier available)
+- node 18 or newer
+- an anthropic api key with credits
+- optional: a browserbase key, only if you want the cloud browser locally. by default local dev opens your own chrome.
 
-### Installation
+**steps**
 
-1. **Clone the repository**:
+```bash
+git clone https://github.com/MiirzaBaig/ai-agent.git
+cd ai-agent
+npm install
+```
 
-   ```bash
-   git clone <repository-url>
-   cd ai-sdk-computer-use
-   ```
+drop a `.env.local` in the root:
 
-2. **Install dependencies**:
+```env
+ANTHROPIC_API_KEY=your_key_here
 
-   ```bash
-   npm install
-   # or
-   pnpm install
-   # or
-   yarn install
-   ```
+# optional, for the cloud browser
+BROWSERBASE_API_KEY=your_key_here
+BROWSERBASE_PROJECT_ID=your_project_id_here
+```
 
-3. **Set up environment variables**:
+then:
 
-   Create a `.env.local` file in the root directory:
+```bash
+npm run dev
+```
 
-   ```env
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
-   E2B_API_KEY=your_e2b_api_key_here
-   ```
+open http://localhost:9005 and give it a task. try something like *"find the top 3 headlines on hacker news right now"* and watch it go.
 
-   **Note**: You can also use Vercel CLI to pull environment variables:
-
-   ```bash
-   npm i -g vercel
-   vercel link
-   vercel env pull
-   ```
-
-4. **Run the development server**:
-
-   ```bash
-   npm run dev
-   # or
-   pnpm dev
-   # or
-   yarn dev
-   ```
-
-5. **Open your browser**:
-
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Building for Production
+**build for prod**
 
 ```bash
 npm run build
@@ -325,220 +142,56 @@ npm start
 
 ---
 
-## Project Structure
+## project layout
 
 ```
-ai-sdk-computer-use/
+ai-agent/
 ├── app/
 │   ├── api/
-│   │   ├── chat/              # AI chat API route
-│   │   ├── get-desktop/       # E2B desktop initialization
-│   │   └── kill-desktop/      # E2B desktop cleanup
-│   ├── layout.tsx             # Root layout with providers
-│   └── page.tsx               # Main dashboard page
+│   │   ├── chat/               # the agent loop
+│   │   ├── browser-live-view/  # live view url for the running browser
+│   │   ├── get-desktop/        # start a browser session
+│   │   └── kill-desktop/       # tear it down
+│   ├── layout.tsx
+│   └── page.tsx                # the two-panel dashboard
 ├── components/
-│   ├── ChatPanel.tsx          # Left panel: chat interface
-│   ├── VNCPanel.tsx            # Right panel: VNC viewer
-│   ├── VNCViewer.tsx          # Memoized VNC iframe component
-│   ├── DebugPanel.tsx         # Collapsible debug panel
-│   ├── SessionList.tsx        # Session management UI
-│   ├── ToolCallDetails.tsx    # Expanded tool call details
-│   ├── message.tsx            # Message component with tool visualizations
-│   ├── input.tsx              # Chat input with animations
-│   ├── prompt-suggestions.tsx # Prompt suggestion chips
-│   ├── MobileVNCToggle.tsx    # Mobile VNC toggle button
-│   └── VNCModal.tsx            # Mobile VNC modal
+│   ├── ChatPanel.tsx           # chat, streaming, per-message actions
+│   ├── LiveFilmstrip.tsx       # live browser view
+│   ├── EvidenceTimeline.tsx    # every step, with screenshots
+│   ├── ReplayScrubber.tsx      # scrub back through a run
+│   ├── AgentActivity.tsx       # what the agent is doing right now
+│   ├── SessionList.tsx         # sessions
+│   ├── SessionTelemetry.tsx    # live cost + token use
+│   ├── ModelSelector.tsx       # opus / sonnet / haiku switch
+│   └── MessageActions.tsx      # copy, copy + sources, share, retry
 ├── lib/
-│   ├── events/
-│   │   ├── types.ts            # TypeScript discriminated unions
-│   │   ├── store.tsx          # Event store context
-│   │   └── hooks.ts            # Event extraction hook
-│   ├── sessions/
-│   │   ├── types.ts            # Session type definitions
-│   │   └── store.tsx           # Session store context
-│   ├── e2b/
-│   │   ├── tool.ts             # E2B tool definitions
-│   │   └── utils.ts            # E2B desktop utilities
-│   ├── scroll-state.tsx       # Scroll state hook
-│   ├── use-scroll-to-bottom.tsx # Auto-scroll hook
-│   └── utils.ts                # Utility functions
-└── README.md                   # This file
+│   ├── browser/
+│   │   ├── session.ts          # chrome over cdp, browserbase or local
+│   │   └── tools.ts            # navigate, click, type, read, screenshot, goBack
+│   ├── events/                 # typed event stream + hooks
+│   ├── sessions/               # session store
+│   ├── models.ts               # model registry + pricing
+│   └── token-limits.ts         # graceful token-limit handling
+└── README.md
 ```
 
-### Key Files
+---
 
-- **`lib/events/types.ts`**: TypeScript discriminated unions for event types
-- **`lib/events/store.tsx`**: Event store context with derived state
-- **`lib/sessions/store.tsx`**: Session management with localStorage
-- **`components/VNCViewer.tsx`**: Performance-optimized VNC component
-- **`app/page.tsx`**: Main dashboard orchestrating all components
+## built with
+
+- [next.js 15](https://nextjs.org) app router and [react 19](https://react.dev)
+- [typescript](https://www.typescriptlang.org), typed end to end
+- [claude](https://www.anthropic.com) for the agent, via the [vercel ai sdk](https://sdk.vercel.ai)
+- [playwright over cdp](https://playwright.dev) to drive chrome
+- [browserbase](https://browserbase.com) for the cloud browser in production
+- [tailwind](https://tailwindcss.com) with a neo-brutalist styling pass
 
 ---
 
-## Usage
+<div align="center">
 
-### Creating a Session
+built by **mirza baig**
 
-1. Click the "+ New" button in the Sessions section
-2. A new session is created with proper numbering
-3. Desktop sandbox is automatically initialized
+[portfolio](https://persona-t82m.vercel.app/) · [linkedin](https://www.linkedin.com/in/mirza-baig-590b1826b/) · [github](https://github.com/MiirzaBaig)
 
-### Switching Sessions
-
-1. Click on any session in the Sessions list
-2. Messages and events are loaded from localStorage
-3. Desktop sandbox is reinitialized for the session
-
-### Viewing Tool Call Details
-
-1. Click on any tool call visualization in the chat
-2. Expanded details appear in the right panel (desktop) or modal (mobile)
-3. View payload, status, duration, and screenshots
-
-### Debug Panel
-
-- **Toggle**: Click the debug button on the right edge (desktop) or use `⌘⇧D` / `Ctrl⇧D`
-- **View**: Event counts, agent status, recent activity timeline
-- **Close**: Press `ESC` or click outside the panel
-
-### Mobile Usage
-
-- VNC viewer is accessible via the monitor button in the header
-- Sessions list scrolls horizontally on mobile
-- All interactions are touch-optimized
-
----
-
-## API Keys
-
-### Anthropic API Key
-
-1. Sign up at [console.anthropic.com](https://console.anthropic.com)
-2. Navigate to API Keys section
-3. Create a new API key
-4. **Important**: Ensure you have credits or a payment method attached
-
-### E2B API Key
-
-1. Sign up at [e2b.dev](https://e2b.dev)
-2. Navigate to API Keys in your dashboard
-3. Create a new API key
-4. Free tier available for development
-
----
-
-## Performance Considerations
-
-### VNC Viewer Isolation
-
-The VNC viewer is completely isolated from chat and event state:
-
-- Separate state variables (`vncStreamUrl`, `vncSandboxId`)
-- Memoized component with custom comparison
-- Only re-renders when stream URL changes
-
-### Event Store Optimization
-
-- Events are stored in memory and persisted to localStorage
-- Derived state (counts, status) computed on-demand
-- No unnecessary re-renders
-
-### Session Management
-
-- Sessions loaded on-demand
-- Messages and events loaded per session
-- Complete cleanup on deletion prevents memory leaks
-
----
-
-## Troubleshooting
-
-### "Server is not running" Error
-
-This occurs when trying to connect to a non-existent or stopped E2B sandbox. The system automatically creates a new sandbox if connection fails.
-
-### "Rate limit exceeded" Error
-
-Anthropic API has rate limits. The system limits message history to the last 20 messages to reduce token usage.
-
-### Placeholder Not Showing
-
-If the input placeholder doesn't appear after agent completion:
-1. The input should auto-clear after 800ms
-2. Try clicking the input field to focus it
-3. Check browser console for errors
-
-### Debug Panel Not Visible
-
-On desktop, the debug panel toggle button is on the right edge of the screen. Use `⌘⇧D` / `Ctrl⇧D` to toggle it.
-
----
-
-## Evaluation Criteria Alignment
-
-### Technical Architecture (40%)
-
-✅ **Event Pipeline Design**: Structured event system with discriminated unions  
-✅ **State Management**: Context API with derived state  
-✅ **TypeScript Usage**: Zero `any` types, full type safety  
-✅ **React Optimization**: Memoization, clean boundaries, no unnecessary re-renders
-
-### Integration & Problem-Solving (30%)
-
-✅ **Existing Codebase**: Extended without breaking existing functionality  
-✅ **Streaming + State + UI**: Seamless integration of all systems  
-✅ **Edge Cases**: Session cleanup, error handling, mobile support
-
-### Code Quality (20%)
-
-✅ **Readability**: Clear naming, organized structure  
-✅ **File Organization**: Logical separation of concerns  
-✅ **Separation of Concerns**: Components, hooks, stores, utilities
-
-### Documentation & Communication (10%)
-
-✅ **README Clarity**: Comprehensive documentation  
-✅ **Decision Explanations**: Technical decisions documented  
-✅ **Code Comments**: Key logic explained
-
----
-
-## Technologies Used
-
-- **Framework**: [Next.js 15](https://nextjs.org) (App Router)
-- **UI Library**: [React 19](https://react.dev)
-- **Language**: [TypeScript](https://www.typescriptlang.org)
-- **AI SDK**: [Vercel AI SDK](https://sdk.vercel.ai)
-- **AI Model**: [Anthropic Claude Sonnet 4](https://www.anthropic.com)
-- **Sandbox**: [E2B Desktop](https://e2b.dev)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com)
-- **Components**: [shadcn/ui](https://ui.shadcn.com)
-- **Animations**: [Framer Motion](https://www.framer.com/motion)
-- **Resizable Panels**: [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels)
-
----
-
-## Contributing
-
-Contributions are welcome! Please feel free to open issues or submit pull requests to enhance functionality or fix bugs.
-
----
-
-## License
-
-This project is based on [vercel-labs/ai-sdk-computer-use](https://github.com/vercel-labs/ai-sdk-computer-use) and maintains the same license.
-
----
-
-## Acknowledgments
-
-- Built on top of [vercel-labs/ai-sdk-computer-use](https://github.com/vercel-labs/ai-sdk-computer-use)
-- Powered by [Vercel AI SDK](https://sdk.vercel.ai)
-- Desktop sandbox provided by [E2B](https://e2b.dev)
-- AI capabilities by [Anthropic](https://www.anthropic.com)
-
----
-
-**Author**: Mirza Baig
-**Project**: AI SDK Computer Use - Production-Quality Agent Dashboard  
-**Version**: 1.0.0
+</div>

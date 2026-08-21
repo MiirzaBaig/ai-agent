@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Coins, Cpu, ArrowDownUp } from "lucide-react";
+import { Activity, ArrowDownUp, Coins, Cpu, Sparkles } from "lucide-react";
 import { getModel } from "@/lib/models";
 import type { SessionUsage } from "@/lib/use-usage";
 
@@ -65,6 +65,12 @@ export function SessionTelemetry({ usage, cost }: SessionTelemetryProps) {
         label="est. cost"
         value={formatCost(cost)}
       />
+      <div className="flex items-center gap-1.5 rounded-md nb-border bg-white px-2 py-0.5">
+        <Sparkles className="h-3 w-3 text-[var(--nb-violet)]" />
+        <span className="text-[9px] font-black uppercase tracking-wide text-[var(--nb-ink)]">
+          Context optimized
+        </span>
+      </div>
       <div className="ml-auto flex items-center gap-1.5">
         <Cpu className="h-3.5 w-3.5 text-zinc-400" />
         <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">

@@ -25,6 +25,7 @@ import { SessionTelemetry } from "@/components/SessionTelemetry";
 import { V2Announcement } from "@/components/V2Announcement";
 import { useModel } from "@/lib/use-model";
 import { useUsage } from "@/lib/use-usage";
+import { isTokenLimitError, TOKEN_TOP_UP_EMAIL } from "@/lib/token-limits";
 import { PanelRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +78,9 @@ export default function Chat() {
     onFinish: ({ message }) => {
       // Total usage is attached as message metadata by the route on finish.
       const totalUsage = (
-        message.metadata as { totalUsage?: { inputTokens?: number; outputTokens?: number } } | undefined
+        message.metadata as
+          | { totalUsage?: { inputTokens?: number; outputTokens?: number } }
+          | undefined
       )?.totalUsage;
       if (totalUsage) {
         recordRun(modelIdRef.current, {
@@ -97,6 +100,16 @@ export default function Chat() {
 
       if (benignInterruption) {
         stoppingRef.current = false;
+        return;
+      }
+
+      if (isTokenLimitError(message)) {
+        toast.error("Demo tokens need a top-up", {
+          description: `Ping ${TOKEN_TOP_UP_EMAIL} and I'll add more credits for your test run.`,
+          richColors: true,
+          position: "top-center",
+          duration: 8000,
+        });
         return;
       }
 
@@ -261,7 +274,11 @@ export default function Chat() {
           />
           <ResizablePanelGroup direction="horizontal" className="h-full flex-1">
             {/* Chat Panel (Center) */}
-            <ResizablePanel defaultSize={50} minSize={30} className="flex flex-col">
+            <ResizablePanel
+              defaultSize={50}
+              minSize={30}
+              className="flex flex-col"
+            >
               {/* Slim top bar — sidebar owns the identity now. */}
               <div className="nb-paper flex items-center justify-end gap-1.5 border-b border-zinc-200 px-4 py-2.5">
                 <ModelSelector
@@ -285,9 +302,7 @@ export default function Chat() {
                 <DeployButton />
               </div>
               <V2Announcement />
-              {usage.runs > 0 && (
-                <SessionTelemetry usage={usage} cost={cost} />
-              )}
+              {usage.runs > 0 && <SessionTelemetry usage={usage} cost={cost} />}
               <ChatPanel
                 messages={messages}
                 input={input}
@@ -364,9 +379,7 @@ export default function Chat() {
             <>
               <SessionList />
               <V2Announcement />
-              {usage.runs > 0 && (
-                <SessionTelemetry usage={usage} cost={cost} />
-              )}
+              {usage.runs > 0 && <SessionTelemetry usage={usage} cost={cost} />}
               <div className="flex-1 min-h-0 flex flex-col">
                 <ChatPanel
                   messages={messages}
@@ -387,15 +400,16 @@ export default function Chat() {
             <div className="flex-1 min-h-0">
               <ActivityPanel
                 isConnected={!!browserSessionId && !isInitializing}
-                isStreaming={
-                  status === "streaming" || status === "submitted"
-                }
+                isStreaming={status === "streaming" || status === "submitted"}
               />
             </div>
           )}
         </div>
 
-        <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} />
+        <SettingsModal
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+        />
       </div>
     </ScrollProvider>
   );

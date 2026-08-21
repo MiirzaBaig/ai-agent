@@ -1,14 +1,10 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import {
-  streamText,
-  convertToModelMessages,
-  stepCountIs,
-  UIMessage,
-} from "ai";
+import { streamText, convertToModelMessages, stepCountIs, UIMessage } from "ai";
 import { killBrowserSession } from "@/lib/browser/session";
 import { browserTools } from "@/lib/browser/tools";
 import { prunedMessages } from "@/lib/utils";
 import { resolveModelId } from "@/lib/models";
+import { isTokenLimitError, tokenLimitMessage } from "@/lib/token-limits";
 
 // Node runtime (Playwright/CDP + child_process); allow long agent runs.
 export const runtime = "nodejs";
@@ -37,7 +33,9 @@ export async function POST(req: Request) {
   try {
     // Resolve the client-supplied model against the allow-list before use.
     const model = resolveModelId(modelId);
-    const modelMessages = await convertToModelMessages(prunedMessages(messages));
+    const modelMessages = await convertToModelMessages(
+      prunedMessages(messages),
+    );
     const result = streamText({
       model: anthropic(model),
       system: systemPrompt,
@@ -67,15 +65,15 @@ export async function POST(req: Request) {
         part.type === "finish" ? { totalUsage: part.totalUsage } : undefined,
       onError(error) {
         console.error(error);
-        
+
         // Handle rate limit errors with a user-friendly message
         if (error instanceof Error) {
           const errorMessage = error.message;
           if (/abort|cancel|interrupted/i.test(errorMessage)) {
             return "Run stopped.";
           }
-          if (errorMessage.includes("rate limit") || errorMessage.includes("exceed")) {
-            return "Rate limit exceeded. Please wait a moment and try again. Your tier allows 30,000 input tokens per minute.";
+          if (isTokenLimitError(errorMessage)) {
+            return tokenLimitMessage();
           }
           return errorMessage;
         }
@@ -86,12 +84,19 @@ export async function POST(req: Request) {
     return response;
   } catch (error) {
     console.error("Chat API error:", error);
+    const errorText = error instanceof Error ? error.message : String(error);
+    const isLimit = isTokenLimitError(errorText);
     if (sandboxId) {
       await killBrowserSession(sandboxId); // Force cleanup on error
     }
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: isLimit ? tokenLimitMessage() : "Internal Server Error",
+      }),
+      {
+        status: isLimit ? 429 : 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }
