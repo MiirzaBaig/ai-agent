@@ -8,9 +8,31 @@
 
 you type a task in plain english. sentry opens a real chrome, clicks around, reads pages, and comes back with an answer. every step is on screen while it happens, and you can scrub back through it after. nothing is hidden.
 
-[live demo](https://ai-sdk-computer-use-theta-dun.vercel.app/) · [how it works](#how-it-works) · [what it does](#what-it-does) · [run it locally](#run-it-locally) · [layout](#project-layout)
+**▶ [watch the 2-min demo (voice narrated)](https://drive.google.com/file/d/1iZz6PNH8cZWmfuI7-f7FfToDq_3mQoj5/view?usp=sharing)** · **[try it live](https://ai-sdk-computer-use-theta-dun.vercel.app/)**
+
+[demo video](#demo) · [how it works](#how-it-works) · [what it does](#what-it-does) · [run it locally](#run-it-locally) · [layout](#project-layout)
 
 </div>
+
+---
+
+## demo
+
+**[▶ watch the full walkthrough (voice narrated) →](https://drive.google.com/file/d/1iZz6PNH8cZWmfuI7-f7FfToDq_3mQoj5/view?usp=sharing)**
+
+a ~2 minute walkthrough with voice narration, covering the whole story end to end:
+
+- **the rebuild** — why sentry moved from a vnc desktop agent to a browser-first engine
+- **live task** — asking it for the weather in dubai and watching a real chrome do the work, step by step
+- **the evidence** — scrubbing back through a run, screenshot by screenshot, to audit exactly what it did
+- **isolated sessions** — a second task in a fresh session, with the first run's history fully intact
+- **transparency** — the debug panel: every event, its status, and how long it took
+
+| link | what it is |
+|---|---|
+| **[demo video](https://drive.google.com/file/d/1iZz6PNH8cZWmfuI7-f7FfToDq_3mQoj5/view?usp=sharing)** | full voice-narrated walkthrough |
+| **[live app](https://ai-sdk-computer-use-theta-dun.vercel.app/)** | open it and run your own task |
+| **[source](https://github.com/MiirzaBaig/ai-agent)** | this repo |
 
 ---
 
